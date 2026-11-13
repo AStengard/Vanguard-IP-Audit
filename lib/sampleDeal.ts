@@ -1,4 +1,4 @@
-﻿// lib/sampleDeal.ts
+// lib/sampleDeal.ts
 // Realistic 12-Patent European Portfolio for Fictional M&A Target "Aetheris MedTech GmbH"
 
 export interface DesignatedStateRecord {
@@ -38,6 +38,9 @@ export interface SamplePatentRecord {
   nextAnnuityAmountEur: number;
   unitaryPatent: boolean;
   mismatchCategory?: string;
+  strictShowcaseUnitary?: boolean;
+  strictShowcaseDesignatedStates?: DesignatedStateRecord[];
+  strictShowcaseGrantDate?: string;
   designatedStates: DesignatedStateRecord[];
   productLine: string;
   revenueAttributionPct: number;
@@ -45,6 +48,7 @@ export interface SamplePatentRecord {
   legalSummary: string;
   spaRemediationClause: string;
   inpadocEvents: InpadocLegalEvent[];
+  [key: string]: any;
 }
 
 export const DEFAULT_TARGET_COMPANY = "Aetheris MedTech GmbH";
