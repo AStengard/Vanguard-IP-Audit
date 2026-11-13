@@ -30,7 +30,9 @@ import {
   ArrowUpRight,
   Printer,
   ChevronDown,
-  RefreshCw
+  RefreshCw,
+  HelpCircle,
+  BookOpen
 } from 'lucide-react';
 import {
   SAMPLE_MA_PATENTS,
@@ -337,6 +339,7 @@ export default function VanguardIpAuditApp() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showMemoModal, setShowMemoModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
   
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -451,6 +454,15 @@ export default function VanguardIpAuditApp() {
 
           {/* Primary Executive Actions */}
           <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setShowGuideModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 shadow-2xs transition cursor-pointer"
+              title="Read clear non-technical instructions on how this platform works"
+            >
+              <HelpCircle className="w-4 h-4 text-emerald-600" />
+              <span>How It Works</span>
+            </button>
+
             <button
               onClick={() => setShowUploadModal(true)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 shadow-2xs transition cursor-pointer"
@@ -1218,6 +1230,220 @@ export default function VanguardIpAuditApp() {
                   Apply &amp; Refresh Audit
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          7. "HOW IT WORKS" CLEAR INSTRUCTIONS GUIDE MODAL
+      ====================================================================== */}
+      {showGuideModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-200 bg-slate-50/80 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                  <HelpCircle className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    How Vanguard IP Audit Works
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    A clear, non-technical walkthrough for legal recruiters, M&amp;A lawyers, and deal teams.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowGuideModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content Body */}
+            <div className="p-6 sm:p-8 space-y-8 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
+              
+              {/* Highlight Box: Purpose */}
+              <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200 text-emerald-950 space-y-1.5">
+                <div className="font-bold text-sm text-emerald-900 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <span>The Real-World M&amp;A Problem This Solves</span>
+                </div>
+                <p className="leading-relaxed">
+                  In technology and healthcare acquisitions, the Seller delivers an Excel spreadsheet claiming dozens of European patents are <em>"solely owned, valid, and active."</em> In reality, junior associates spend <strong>20+ billable hours</strong> manually cross-checking Espacenet and the European Patent Register. Vanguard IP Audit automates that preliminary audit in seconds against the statutory rules of the <strong>European Patent Convention (EPC)</strong>.
+                </p>
+              </div>
+
+              {/* Step-by-Step Guide */}
+              <div className="space-y-6">
+                
+                {/* Step 1 */}
+                <div className="flex gap-4 items-start">
+                  <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
+                    1
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      Read the Deal Health at a Glance (The 4 Top KPI Cards)
+                    </h3>
+                    <p className="leading-relaxed text-slate-600">
+                      The top summary cards instantly categorize the entire portfolio by severity so dealmakers know where risks lie:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-2">
+                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
+                        <strong className="text-rose-800 block text-xs">Critical Red Flags (3)</strong>
+                        <span className="text-[11px] text-rose-700 mt-0.5 block leading-normal">
+                          Fatal deal risks: Unrecorded university transfers, dead lapsed patents, or competitor lawsuits.
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                        <strong className="text-amber-900 block text-xs">Material Warnings (2)</strong>
+                        <span className="text-[11px] text-amber-800 mt-0.5 block leading-normal">
+                          Manageable risks: Annuity grace periods with surcharges or narrow geographic validation.
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                        <strong className="text-emerald-900 block text-xs">Verified Good Standing (7)</strong>
+                        <span className="text-[11px] text-emerald-800 mt-0.5 block leading-normal">
+                          Clean title and paid fees ready for standard transaction warranties.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex gap-4 items-start">
+                  <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
+                    2
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      The 5 Statutory Legal Checks (What the Auditor Evaluates)
+                    </h3>
+                    <p className="leading-relaxed text-slate-600">
+                      Every European patent is automatically cross-checked against five strict legal rules under the European Patent Convention:
+                    </p>
+                    <div className="space-y-2 mt-2">
+                      <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <strong className="text-slate-900 block font-bold">1. Ownership &amp; Chain of Title (Art. 72 &amp; Rule 22 EPC)</strong>
+                        <span className="text-slate-600 block leading-relaxed">
+                          Strips corporate suffixes (`GmbH`, `Ltd`, `Inc`) and fuzzy-matches the recorded owner against the target company. Flags unrecorded assignments where title is still stuck in the name of a university or individual founder.
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <strong className="text-slate-900 block font-bold">2. Maintenance &amp; Renewal Fees (Art. 86 EPC)</strong>
+                        <span className="text-slate-600 block leading-relaxed">
+                          Verifies whether annual maintenance renewal fees are paid, currently in the 6-month late surcharge grace period, or irrevocably dead.
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <strong className="text-slate-900 block font-bold">3. Competitor Oppositions &amp; Validity (Art. 99 EPC)</strong>
+                        <span className="text-slate-600 block leading-relaxed">
+                          Detects whether competitors have launched central revocation challenges before the EPO, or if a patent granted fewer than 9 months ago is still inside the vulnerable opposition window.
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <strong className="text-slate-900 block font-bold">4. Territorial Coverage (Art. 65 EPC &amp; Unitary Patent)</strong>
+                        <span className="text-slate-600 block leading-relaxed">
+                          Checks which European states (DE, FR, GB, etc.) were actively validated, or confirms Unitary Patent (UP) protection across 17 EU Member States.
+                        </span>
+                      </div>
+                      <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <strong className="text-slate-900 block font-bold">5. 20-Year Expiration Runway (Art. 63(1) EPC)</strong>
+                        <span className="text-slate-600 block leading-relaxed">
+                          Calculates remaining statutory life from filing. Alerts buyers if a patent expires within 3 years so financial valuation models discount future gross margins.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex gap-4 items-start">
+                  <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
+                    3
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      Inspect an Asset Dossier &amp; Copy Contract Remediation
+                    </h3>
+                    <p className="leading-relaxed text-slate-600">
+                      Click on any patent row in the table (or click the <strong>Dossier</strong> button) to open its legal inspection panel:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-slate-600 pl-1 mt-1">
+                      <li>Review the full 5-pillar scorecard with plain-English lawyer's notes.</li>
+                      <li>Inspect the auto-drafted <strong>Share Purchase Agreement (SPA) Contract Clause</strong> tailored specifically to the defect (e.g. <em>Closing Condition Precedent</em> or <em>Special Escrow Holdback</em>).</li>
+                      <li>Click the <strong>"Copy Draft Clause"</strong> button to copy the exact contract language directly to your clipboard.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Step 4 */}
+                <div className="flex gap-4 items-start">
+                  <div className="w-7 h-7 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center shrink-0 text-xs shadow-xs">
+                    4
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      Export Partner-Ready Deliverables in One Click
+                    </h3>
+                    <p className="leading-relaxed text-slate-600">
+                      Generate law firm deliverables directly from the top navigation bar:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <FileText className="w-4 h-4 text-emerald-600" />
+                          <span>Generate Executive Memo (PDF)</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          Opens a formal Law Firm Due Diligence Memo. Click "Print / Save as PDF" to generate a clean client deliverable.
+                        </p>
+                      </div>
+                      <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+                        <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                          <span>Export CSV (Schedule 3.14)</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-normal">
+                          Downloads a spreadsheet pre-formatted for Schedule 3.14 (Registered Intellectual Property) of a Share Purchase Agreement.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Interactive Recruiter Pro Tip */}
+              <div className="p-4 rounded-xl bg-slate-100 border border-slate-300 space-y-1.5">
+                <div className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
+                  <Info className="w-4 h-4 text-slate-700" />
+                  <span>Pro Tip for Interviewers &amp; Recruiters</span>
+                </div>
+                <p className="text-slate-600 leading-relaxed text-[11px]">
+                  Want to test the live intelligence? In the dashboard header, click <strong>Edit</strong> next to <em>Aetheris MedTech GmbH</em> and change the company name to <em>Acme Corporation</em>. Notice how the Chain-of-Title scores immediately recalculate in real time!
+                </p>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+              <button
+                onClick={() => setShowGuideModal(false)}
+                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+              >
+                Got It — Explore Dashboard
+              </button>
             </div>
           </div>
         </div>
