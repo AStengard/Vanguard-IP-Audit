@@ -10,17 +10,19 @@ import {
   Layers,
   Building2,
   Plus,
-  LayoutDashboard
+  LayoutDashboard,
+  History
 } from 'lucide-react';
 import { useDeal } from './DealContext';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { targetCompany, downloadCsv } = useDeal();
+  const { targetCompany, downloadCsv, savedAudits } = useDeal();
 
   const navLinks = [
     { href: '/overview', label: 'Overview', icon: LayoutDashboard },
     { href: '/portfolio', label: 'Portfolio Schedule', icon: Layers },
+    { href: '/history', label: 'Audit History', icon: History, count: savedAudits?.length },
     { href: '/memo', label: 'Executive Memo', icon: FileText },
     { href: '/guide', label: 'How It Works', icon: HelpCircle },
   ];
@@ -65,6 +67,13 @@ export default function Navbar() {
                 >
                   <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
                   <span>{link.label}</span>
+                  {link.count !== undefined && link.count > 0 && (
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      isActive ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+                    }`}>
+                      {link.count}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -76,25 +85,38 @@ export default function Navbar() {
         ==================================================================== */}
         <div className="flex items-center gap-2">
           {/* Active Target Indicator Pill */}
-          <Link
-            href="/"
-            className="hidden sm:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold transition"
-            title="Click to change target entity or start new audit"
-          >
-            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span className="text-slate-500">Target:</span>
-            <span className="font-bold text-slate-900 max-w-[130px] truncate">{targetCompany}</span>
-          </Link>
+          {targetCompany ? (
+            <Link
+              href="/"
+              className="hidden sm:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold transition"
+              title="Click to change target entity or start new audit"
+            >
+              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="text-slate-500">Target:</span>
+              <span className="font-bold text-slate-900 max-w-[130px] truncate">{targetCompany}</span>
+            </Link>
+          ) : (
+            <Link
+              href="/"
+              className="hidden sm:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-50/70 hover:bg-slate-100 text-slate-500 border border-dashed border-slate-300 text-xs font-medium transition"
+              title="No target entity selected yet — click to configure audit"
+            >
+              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>No Target Selected</span>
+            </Link>
+          )}
 
-          {/* Export CSV Button */}
-          <button
-            onClick={downloadCsv}
-            className="hidden md:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition cursor-pointer"
-            title="Download Schedule 3.14 spreadsheet (CSV)"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>Export CSV</span>
-          </button>
+          {/* Export CSV Button (Only when target is loaded) */}
+          {targetCompany && (
+            <button
+              onClick={downloadCsv}
+              className="hidden md:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition cursor-pointer"
+              title="Download Schedule 3.14 spreadsheet (CSV)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <span>Export CSV</span>
+            </button>
+          )}
 
           {/* New Audit CTA Button */}
           <Link

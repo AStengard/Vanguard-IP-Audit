@@ -32,11 +32,12 @@ export default function LandingPortalPage() {
     setTargetCompany,
     portfolioData,
     setPortfolioData,
-    resetToShowcase
+    resetToShowcase,
+    saveAuditRecord
   } = useDeal();
 
   // Custom Audit Form State
-  const [customTarget, setCustomTarget] = useState('BioNTech SE');
+  const [customTarget, setCustomTarget] = useState('');
   const [customPatentText, setCustomPatentText] = useState('');
   const [queryMode, setQueryMode] = useState<'ENGINE' | 'LIVE_EPO'>('ENGINE');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,6 +140,7 @@ export default function LandingPortalPage() {
 
         setTargetCompany(cleanTargetName);
         setPortfolioData(livePatents);
+        saveAuditRecord(cleanTargetName, livePatents, `${cleanTargetName} — Live EPO Registry Scan`);
         router.push('/overview');
         return;
       } catch (err: any) {
@@ -193,6 +195,7 @@ export default function LandingPortalPage() {
 
     setTargetCompany(cleanTargetName);
     setPortfolioData(generatedAssets);
+    saveAuditRecord(cleanTargetName, generatedAssets, `${cleanTargetName} — Statutory EPC Audit`);
     router.push('/overview');
   };
 

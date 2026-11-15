@@ -14,12 +14,13 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
-  FileText
+  FileText,
+  ArrowRight
 } from 'lucide-react';
 import { useDeal } from '@/components/DealContext';
 
 export default function MemoPage() {
-  const { targetCompany, evaluatedPortfolio, metrics, downloadCsv } = useDeal();
+  const { targetCompany, evaluatedPortfolio, metrics, downloadCsv, resetToShowcase } = useDeal();
 
   const criticalAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'CRITICAL');
   const warningAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'WARNING');
@@ -28,6 +29,40 @@ export default function MemoPage() {
   const handlePrint = () => {
     window.print();
   };
+
+  if (evaluatedPortfolio.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+          <FileText className="w-7 h-7 text-slate-500" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">
+            No Memorandum to Generate
+          </h1>
+          <p className="text-xs text-slate-500 max-w-md mx-auto font-serif leading-relaxed">
+            There is currently no active transaction audit to generate a due diligence memorandum for. Please start a new audit or launch the showcase template.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition shadow-xs"
+          >
+            <span>Start a New Audit</span>
+            <ArrowRight className="w-4 h-4 text-emerald-400" />
+          </Link>
+          <button
+            onClick={() => resetToShowcase()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer"
+          >
+            <span>Load Showcase Template</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import {
   SAMPLE_MA_PATENTS,
   DEFAULT_TARGET_COMPANY,
@@ -292,8 +292,24 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
 }
 
 // ============================================================================
-// CONTEXT
 // ============================================================================
+// CONTEXT & AUDIT HISTORY
+// ============================================================================
+export interface SavedAuditRecord {
+  id: string;
+  name: string;
+  targetCompany: string;
+  createdAt: string;
+  portfolioData: SamplePatentRecord[];
+  metrics: {
+    total: number;
+    critical: number;
+    warning: number;
+    clean: number;
+    cleanPct: number;
+  };
+}
+
 interface DealContextType {
   targetCompany: string;
   setTargetCompany: (name: string) => void;
@@ -309,13 +325,54 @@ interface DealContextType {
   };
   downloadCsv: () => void;
   resetToShowcase: () => void;
+  clearDeal: () => void;
+  isDealLoaded: boolean;
+  activeAuditId: string | null;
+  savedAudits: SavedAuditRecord[];
+  saveAuditRecord: (target: string, patents: SamplePatentRecord[], customName?: string) => string;
+  loadSavedAudit: (id: string) => void;
+  renameSavedAudit: (id: string, newName: string) => void;
+  deleteSavedAudit: (id: string) => void;
+  clearAllSavedAudits: () => void;
 }
 
 const DealContext = createContext<DealContextType | undefined>(undefined);
 
 export function DealProvider({ children }: { children: React.ReactNode }) {
-  const [targetCompany, setTargetCompany] = useState<string>(DEFAULT_TARGET_COMPANY);
-  const [portfolioData, setPortfolioData] = useState<SamplePatentRecord[]>(SAMPLE_MA_PATENTS);
+  const [targetCompany, setTargetCompany] = useState<string>('');
+  const [portfolioData, setPortfolioData] = useState<SamplePatentRecord[]>([]);
+  const [activeAuditId, setActiveAuditId] = useState<string | null>(null);
+  const [savedAudits, setSavedAudits] = useState<SavedAuditRecord[]>([]);
+
+  // Load saved audit history from localStorage on initial client mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('vanguard_saved_audits_v1');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setSavedAudits(parsed);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse saved audits from localStorage', err);
+      }
+    }
+  }, []);
+
+  const persistAudits = (audits: SavedAuditRecord[]) => {
+    setSavedAudits(audits);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('vanguard_saved_audits_v1', JSON.stringify(audits));
+      } catch (err) {
+        console.error('Failed to persist audits to localStorage', err);
+      }
+    }
+  };
+
+  const isDealLoaded = Boolean(targetCompany && portfolioData.length > 0);
 
   const evaluatedPortfolio = useMemo(() => {
     return portfolioData.map((p) => evaluatePatentAsset(p, targetCompany));
@@ -330,12 +387,75 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     return { total, critical, warning, clean, cleanPct };
   }, [evaluatedPortfolio]);
 
+  const saveAuditRecord = (target: string, patents: SamplePatentRecord[], customName?: string): string => {
+    if (!target || patents.length === 0) return '';
+    const evaluated = patents.map((p) => evaluatePatentAsset(p, target));
+    const total = evaluated.length;
+    const critical = evaluated.filter((p) => p.overallRisk === 'CRITICAL').length;
+    const warning = evaluated.filter((p) => p.overallRisk === 'WARNING').length;
+    const clean = evaluated.filter((p) => p.overallRisk === 'CLEAN').length;
+    const cleanPct = total > 0 ? Math.round((clean / total) * 100) : 0;
+
+    const newId = `audit_${Date.now()}`;
+    const defaultName = customName || `${target} Diligence Scan`;
+    const newRecord: SavedAuditRecord = {
+      id: newId,
+      name: defaultName,
+      targetCompany: target,
+      createdAt: new Date().toISOString(),
+      portfolioData: patents,
+      metrics: { total, critical, warning, clean, cleanPct }
+    };
+
+    const updated = [newRecord, ...savedAudits.filter((a) => a.id !== newId)];
+    persistAudits(updated);
+    setActiveAuditId(newId);
+    return newId;
+  };
+
+  const loadSavedAudit = (id: string) => {
+    const audit = savedAudits.find((a) => a.id === id);
+    if (audit) {
+      setTargetCompany(audit.targetCompany);
+      setPortfolioData(audit.portfolioData);
+      setActiveAuditId(audit.id);
+    }
+  };
+
+  const renameSavedAudit = (id: string, newName: string) => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    const updated = savedAudits.map((a) => (a.id === id ? { ...a, name: trimmed } : a));
+    persistAudits(updated);
+  };
+
+  const deleteSavedAudit = (id: string) => {
+    const updated = savedAudits.filter((a) => a.id !== id);
+    persistAudits(updated);
+    if (activeAuditId === id) {
+      setActiveAuditId(null);
+    }
+  };
+
+  const clearAllSavedAudits = () => {
+    persistAudits([]);
+    setActiveAuditId(null);
+  };
+
   const resetToShowcase = () => {
     setTargetCompany(DEFAULT_TARGET_COMPANY);
     setPortfolioData(SAMPLE_MA_PATENTS);
+    saveAuditRecord(DEFAULT_TARGET_COMPANY, SAMPLE_MA_PATENTS, 'Project Aetheris — MedTech Showcase');
+  };
+
+  const clearDeal = () => {
+    setTargetCompany('');
+    setPortfolioData([]);
+    setActiveAuditId(null);
   };
 
   const downloadCsv = () => {
+    if (evaluatedPortfolio.length === 0) return;
     const headers = [
       'Schedule_Ref',
       'Patent_ID',
@@ -386,7 +506,16 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
         evaluatedPortfolio,
         metrics,
         downloadCsv,
-        resetToShowcase
+        resetToShowcase,
+        clearDeal,
+        isDealLoaded,
+        activeAuditId,
+        savedAudits,
+        saveAuditRecord,
+        loadSavedAudit,
+        renameSavedAudit,
+        deleteSavedAudit,
+        clearAllSavedAudits
       }}
     >
       {children}

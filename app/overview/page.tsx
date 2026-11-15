@@ -21,16 +21,51 @@ import {
   XCircle,
   HelpCircle,
   ExternalLink,
-  Plus
+  Plus,
+  History
 } from 'lucide-react';
 import { useDeal } from '@/components/DealContext';
 
 export default function OverviewPage() {
-  const { targetCompany, evaluatedPortfolio, metrics, downloadCsv } = useDeal();
+  const { targetCompany, evaluatedPortfolio, metrics, downloadCsv, resetToShowcase } = useDeal();
 
   // Find the critical red flags to feature on the executive action center
   const criticalAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'CRITICAL');
   const warningAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'WARNING');
+
+  if (!targetCompany || evaluatedPortfolio.length === 0) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center space-y-6">
+        <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+          <Building2 className="w-7 h-7 text-slate-500" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-black tracking-tight text-slate-900">
+            No Active Transaction Audit
+          </h1>
+          <p className="text-xs text-slate-500 max-w-md mx-auto font-serif leading-relaxed">
+            No target company or patent portfolio is currently loaded. You can configure a new transaction audit with your own assets or launch the pre-configured 12-patent showcase.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition shadow-xs"
+          >
+            <span>Start a New Audit</span>
+            <ArrowRight className="w-4 h-4 text-emerald-400" />
+          </Link>
+          <button
+            onClick={() => resetToShowcase()}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold hover:bg-emerald-100 transition cursor-pointer"
+          >
+            <span>Load Showcase Template</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -77,6 +112,15 @@ export default function OverviewPage() {
           >
             <FileText className="w-4 h-4 text-emerald-600" />
             <span>Executive Memo (PDF)</span>
+          </Link>
+
+          <Link
+            href="/history"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+            title="View saved scans in Audit History"
+          >
+            <History className="w-4 h-4 text-slate-500" />
+            <span>Audit Vault</span>
           </Link>
 
           <Link
