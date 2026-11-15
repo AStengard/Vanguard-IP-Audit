@@ -54,7 +54,7 @@ export default function PortfolioPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
-            <Link href="/" className="hover:text-slate-900 transition">
+            <Link href="/overview" className="hover:text-slate-900 transition">
               Overview
             </Link>
             <span>/</span>

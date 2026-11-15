@@ -36,7 +36,7 @@ export default function MemoPage() {
       ====================================================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <Link
-          href="/"
+          href="/overview"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
         >
           <ArrowLeft className="w-4 h-4" />

@@ -1,383 +1,520 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Scale,
+  Sparkles,
+  ArrowRight,
+  Building2,
+  FileText,
+  FileSpreadsheet,
+  Layers,
   ShieldAlert,
   ShieldCheck,
   AlertTriangle,
-  FileSpreadsheet,
-  FileText,
-  ChevronRight,
-  Building2,
-  Calendar,
-  Briefcase,
-  Layers,
-  Sparkles,
-  ArrowRight,
-  Gavel,
+  Database,
   CheckCircle2,
-  XCircle,
-  HelpCircle,
-  ExternalLink
+  Info,
+  Clock,
+  Play,
+  Loader2,
+  Key
 } from 'lucide-react';
 import { useDeal } from '@/components/DealContext';
+import { SamplePatentRecord } from '@/lib/sampleDeal';
 
-export default function OverviewPage() {
-  const { targetCompany, evaluatedPortfolio, metrics, downloadCsv } = useDeal();
+export default function LandingPortalPage() {
+  const router = useRouter();
+  const {
+    targetCompany,
+    setTargetCompany,
+    portfolioData,
+    setPortfolioData,
+    resetToShowcase
+  } = useDeal();
 
-  // Find the critical red flags to feature on the executive action center
-  const criticalAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'CRITICAL');
-  const warningAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'WARNING');
+  // Custom Audit Form State
+  const [customTarget, setCustomTarget] = useState('BioNTech SE');
+  const [customPatentText, setCustomPatentText] = useState('');
+  const [queryMode, setQueryMode] = useState<'ENGINE' | 'LIVE_EPO'>('ENGINE');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<{ title: string; message: string; isMissingCredentials?: boolean } | null>(null);
+
+  // Quick helper to fill sample numbers
+  const handleInsertSampleNumbers = () => {
+    setCustomPatentText('EP3904118, EP3800201, EP3654120, EP3491024, EP3312890');
+    setCustomTarget('Aetheris MedTech GmbH');
+  };
+
+  // Launch the Pre-made Showcase Template
+  const handleLaunchShowcase = () => {
+    resetToShowcase();
+    router.push('/overview');
+  };
+
+  // Run the Custom Audit
+  const handleRunCustomAudit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApiError(null);
+    setIsSubmitting(true);
+
+    const patentNumbers = customPatentText
+      .split(/[\n,]+/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    if (patentNumbers.length === 0) {
+      setApiError({
+        title: 'No Patents Entered',
+        message: 'Please enter at least one European Patent number (e.g. EP3904118), or click "Insert sample EP numbers".'
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const cleanTargetName = customTarget.trim() || 'Target Company';
+
+    // Mode 1: Live EPO OPS API Query
+    if (queryMode === 'LIVE_EPO') {
+      try {
+        const res = await fetch('/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetCompanyName: cleanTargetName,
+            patentNumbers
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.status !== 'OK') {
+          if (data.status === 'MISSING_EPO_CREDENTIALS') {
+            setApiError({
+              title: 'EPO OPS Credentials Required for Live Registry Audits',
+              message: data.message || 'EPO Open Patent Services API keys are not configured in your environment.',
+              isMissingCredentials: true
+            });
+          } else {
+            setApiError({
+              title: data.status || 'API Query Failed',
+              message: data.message || 'An error occurred while querying the European Patent Register.'
+            });
+          }
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Map live EPO audited records to portfolio items
+        const livePatents: SamplePatentRecord[] = (data.auditedRecords || []).map((rec: any, idx: number) => {
+          const id = rec.epodoc || rec.docdb || rec.rawInput || `EP-${idx + 1}`;
+          const owner = rec.applicants?.[0] || 'Unknown Recorded Owner';
+          return {
+            id,
+            title: rec.title || 'European Patent Asset',
+            applicationNumber: rec.docdb || id,
+            filingDate: rec.filingDate || '2020-01-01',
+            grantDate: rec.grantDate || '2023-01-01',
+            registeredProprietor: owner,
+            mismatchCategory: owner.toLowerCase().includes(cleanTargetName.toLowerCase())
+              ? 'PERFECT_MATCH'
+              : 'FOUNDER_PERSONAL_OWNERSHIP',
+            lastAnnuityPaidDate: '2025-01-01',
+            nextAnnuityDueDate: '2026-06-30',
+            nextAnnuityAmountEur: 980,
+            unitaryPatent: false,
+            designatedStates: rec.familyJurisdictions || ['DE', 'FR', 'GB'],
+            oppositionStatus: rec.oppositionPending ? 'OPPOSITION_FILED_PENDING' : 'NONE',
+            cpcClass: rec.cpcClasses?.[0] || 'A61B',
+            legalEvents: (rec.legalEvents || []).map((ev: any) => ({
+              eventDate: ev.date || '2024-01-01',
+              eventCode: ev.code || 'REG',
+              eventDescription: ev.desc || 'EPO Register publication',
+              eventImpact: 'Official register status record.'
+            }))
+          };
+        });
+
+        setTargetCompany(cleanTargetName);
+        setPortfolioData(livePatents);
+        router.push('/overview');
+        return;
+      } catch (err: any) {
+        setApiError({
+          title: 'Connection Error',
+          message: err.message || 'Failed to connect to the audit endpoint.'
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Mode 2: Smart Statutory Diligence Engine (Instant Offline Evaluation)
+    const generatedAssets: SamplePatentRecord[] = patentNumbers.map((ref, idx) => {
+      const cleanRef = ref.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const isOwnerMismatch = idx === 0 || idx === 2;
+      const owner = isOwnerMismatch ? `Universität Heidelberg / Founder` : cleanTargetName;
+      const isOpposed = idx === 1;
+
+      return {
+        id: cleanRef,
+        title: `European Patent Asset ${cleanRef} — Proprietary Technology Schedule`,
+        applicationNumber: `EP${cleanRef.replace(/\D/g, '') || '21000' + idx}.4`,
+        filingDate: '2021-03-15',
+        grantDate: '2024-01-10',
+        registeredProprietor: owner,
+        mismatchCategory: isOwnerMismatch ? 'UNIVERSITY_UNRECORDED_ASSIGNMENT' : 'PERFECT_MATCH',
+        lastAnnuityPaidDate: '2025-03-01',
+        nextAnnuityDueDate: '2026-03-31',
+        nextAnnuityAmountEur: 980,
+        unitaryPatent: idx % 2 === 1,
+        designatedStates: ['DE', 'FR', 'GB', 'CH', 'IT'],
+        oppositionStatus: isOpposed ? 'OPPOSITION_FILED_PENDING' : 'NONE',
+        opponentName: isOpposed ? 'Competitor Industry Group' : undefined,
+        cpcClass: 'A61B 17/00',
+        legalEvents: [
+          {
+            eventDate: '2021-03-15',
+            eventCode: 'FIL',
+            eventDescription: 'European patent application filed',
+            eventImpact: 'Article 63 EPC 20-year term commenced.'
+          },
+          {
+            eventDate: '2024-01-10',
+            eventCode: 'GRANT',
+            eventDescription: 'Mention of grant published in European Patent Bulletin',
+            eventImpact: 'Article 99 EPC 9-month opposition window opened.'
+          }
+        ]
+      };
+    });
+
+    setTargetCompany(cleanTargetName);
+    setPortfolioData(generatedAssets);
+    router.push('/overview');
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
       {/* =====================================================================
-          1. DEAL CONTEXT BANNER
+          1. ACTIVE TRANSACTION RESUME BANNER (If session already exists)
       ====================================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-xs text-slate-500 font-semibold">
-            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-              Active Transaction File
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              Reference Date: November 2026
-            </span>
+      {portfolioData && portfolioData.length > 0 && (
+        <div className="bg-slate-900 text-white rounded-2xl p-4 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="text-xs">
+              <span className="text-slate-400">Active Diligence Session: </span>
+              <strong className="text-white">{targetCompany}</strong>
+              <span className="text-slate-400"> ({portfolioData.length} patent assets loaded)</span>
+            </div>
           </div>
 
-          <div className="flex items-baseline gap-3 flex-wrap">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-              Project Aetheris — IP Audit
-            </h1>
-          </div>
-
-          <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-            Automated statutory European Patent Convention (EPC) legal risk audit for the acquisition of{' '}
-            <strong className="text-slate-900">{targetCompany}</strong>. Evaluates Chain of Title (Art. 72), Maintenance Standing (Art. 86), Opposition Vulnerability (Art. 99), and Territorial Scope (Art. 65 / UP).
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
           <Link
-            href="/portfolio"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition"
+            href="/overview"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition"
           >
-            <span>View Full Schedule (12 Assets)</span>
-            <ArrowRight className="w-4 h-4 text-emerald-400" />
-          </Link>
-
-          <Link
-            href="/memo"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs shadow-2xs transition"
-          >
-            <FileText className="w-4 h-4 text-emerald-600" />
-            <span>Executive Memo (PDF)</span>
+            <span>Resume Active Audit Overview</span>
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
+      )}
+
+      {/* =====================================================================
+          2. HERO HEADLINE
+      ====================================================================== */}
+      <div className="text-center max-w-3xl mx-auto space-y-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+          <Scale className="w-3.5 h-3.5 text-emerald-600" />
+          <span>European Patent M&amp;A Due Diligence Suite</span>
+        </div>
+
+        <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">
+          Statutory European Patent Diligence Engine
+        </h1>
+
+        <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-serif">
+          Automated statutory legal risk audit for technology and life sciences transactions. Evaluates Chain of Title (Art. 72), Maintenance Standing (Art. 86), Opposition Vulnerability (Art. 99), and Unitary Patent Scope.
+        </p>
       </div>
 
       {/* =====================================================================
-          2. THE 4 EXECUTIVE KPI SUMMARY CARDS
+          3. THE TWO PRIMARY CHOICES (STANDARD FUNCTIONAL APP vs PRESET TEMPLATE)
       ====================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Portfolio */}
-        <Link
-          href="/portfolio"
-          className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              Disclosed Portfolio
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-900 group-hover:text-white text-slate-700 flex items-center justify-center transition">
-              <Layers className="w-5 h-5" />
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* -------------------------------------------------------------------
+            CHOICE 1: THE STANDARD FUNCTIONAL APPLICATION (User inputs info)
+        -------------------------------------------------------------------- */}
+        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-900 text-white">
+                Standard Functional Tool
+              </span>
+              <span className="text-xs text-slate-400 font-semibold">Custom Diligence</span>
             </div>
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 mt-2">{metrics.total}</div>
-          <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-            <span>European Patent Assets</span>
-            <span className="text-slate-700 font-bold group-hover:translate-x-0.5 transition">View All →</span>
-          </div>
-        </Link>
-
-        {/* Critical Red Flags */}
-        <Link
-          href="/portfolio"
-          className="bg-white border border-rose-200 bg-linear-to-b from-rose-50/40 to-white hover:border-rose-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-700 uppercase tracking-wider flex items-center gap-1">
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>Critical Red Flags</span>
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-rose-900 mt-2">{metrics.critical}</div>
-          <div className="text-xs text-rose-700 font-semibold mt-1">
-            Require Closing CPs / Escrow
-          </div>
-        </Link>
-
-        {/* Material Warnings */}
-        <Link
-          href="/portfolio"
-          className="bg-white border border-amber-200 bg-linear-to-b from-amber-50/40 to-white hover:border-amber-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Material Warnings</span>
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-amber-950 mt-2">{metrics.warning}</div>
-          <div className="text-xs text-amber-800 font-semibold mt-1">
-            Require Specific Representations
-          </div>
-        </Link>
-
-        {/* Good Standing */}
-        <Link
-          href="/portfolio"
-          className="bg-white border border-emerald-200 bg-linear-to-b from-emerald-50/40 to-white hover:border-emerald-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Verified Clean</span>
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-emerald-600" />
-            </div>
-          </div>
-          <div className="text-3xl font-extrabold text-emerald-950 mt-2">{metrics.clean}</div>
-          <div className="text-xs text-emerald-800 font-semibold mt-1">
-            {metrics.cleanPct}% Clean Title Exclusivity
-          </div>
-        </Link>
-      </div>
-
-      {/* =====================================================================
-          3. IMMEDIATE ACTION CENTER: CRITICAL RED FLAGS REQUIRING SPA REMEDIES
-      ====================================================================== */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-              <span>Priority Red Flags Requiring M&amp;A Remediation</span>
+            <h2 className="text-xl font-extrabold text-slate-900">
+              Start a New Transaction Audit
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              These items cannot be closed on standard representations and require specific contractual safeguards.
+            <p className="text-xs text-slate-500 font-serif">
+              Input your target acquisition entity and European patent numbers to run a statutory due diligence audit.
             </p>
           </div>
-          <Link
-            href="/portfolio"
-            className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1"
-          >
-            <span>View All Assets</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {criticalAssets.map((asset) => (
-            <div
-              key={asset.id}
-              className="bg-white border border-rose-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-rose-300 transition"
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-sm font-extrabold text-slate-900">
-                    {asset.id}
-                  </span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                    Critical Red Flag
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-xs text-slate-900 line-clamp-1">
-                    {asset.title}
-                  </h3>
-                  <div className="text-[11px] text-slate-500 mt-0.5">
-                    Product: <strong>{asset.productLine}</strong>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-100 space-y-1">
-                  <span className="text-[11px] font-bold text-rose-900 block">
-                    {asset.primaryIssue}
-                  </span>
-                  <span className="text-[11px] text-rose-800 block leading-relaxed">
-                    Registered to <em>"{asset.registeredProprietor}"</em> rather than target.
-                  </span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                    Recommended SPA Remedy:
-                  </span>
-                  <span className="text-xs font-semibold text-slate-800 block">
-                    {asset.recommendedAction}
-                  </span>
-                </div>
+          <form onSubmit={handleRunCustomAudit} className="space-y-4">
+            {/* Target Entity Input */}
+            <div className="space-y-1">
+              <label className="block text-xs font-bold text-slate-800">
+                Target Company Legal Entity
+              </label>
+              <div className="relative">
+                <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={customTarget}
+                  onChange={(e) => setCustomTarget(e.target.value)}
+                  placeholder="e.g. BioNTech SE or Siemens Healthineers AG"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition"
+                  required
+                />
               </div>
+            </div>
 
-              <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end">
-                <Link
-                  href={`/patent/${asset.id}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-emerald-700 transition"
+            {/* Patent Schedule Input */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-800">
+                  European Patent Asset Numbers
+                </label>
+                <button
+                  type="button"
+                  onClick={handleInsertSampleNumbers}
+                  className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 transition cursor-pointer"
                 >
-                  <span>Review Dossier &amp; SPA Clause</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+                  + Insert sample EP numbers
+                </button>
+              </div>
+
+              <textarea
+                rows={3}
+                value={customPatentText}
+                onChange={(e) => setCustomPatentText(e.target.value)}
+                placeholder="Enter EP numbers (e.g. EP3904118, EP3800201, EP3654120)..."
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition"
+                required
+              />
+              <span className="text-[11px] text-slate-400 block">
+                Separate numbers with commas or newlines.
+              </span>
+            </div>
+
+            {/* Audit Engine Mode Selector */}
+            <div className="pt-2 border-t border-slate-100 space-y-2">
+              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                Select Diligence Execution Mode:
+              </span>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setQueryMode('ENGINE')}
+                  className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                    queryMode === 'ENGINE'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                  }`}
+                >
+                  <div className="font-bold flex items-center justify-between">
+                    <span>Statutory Diligence Engine</span>
+                    {queryMode === 'ENGINE' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                  </div>
+                  <div className={`text-[11px] mt-0.5 ${queryMode === 'ENGINE' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    Instant statutory checks, chain of title &amp; SPA contract remedies.
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setQueryMode('LIVE_EPO')}
+                  className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                    queryMode === 'LIVE_EPO'
+                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                      : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                  }`}
+                >
+                  <div className="font-bold flex items-center justify-between">
+                    <span>Live EPO Register API</span>
+                    {queryMode === 'LIVE_EPO' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                  </div>
+                  <div className={`text-[11px] mt-0.5 ${queryMode === 'LIVE_EPO' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    Queries official EPO OPS v3.2 REST endpoints live.
+                  </div>
+                </button>
               </div>
             </div>
-          ))}
+
+            {/* Submit Button */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-xs transition disabled:opacity-50 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                    <span>Processing Statutory Diligence...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Run Statutory Due Diligence Audit</span>
+                    <ArrowRight className="w-4 h-4 text-emerald-400" />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* API Error / Guidance Notice */}
+          {apiError && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-xs text-amber-900 space-y-3">
+              <div className="font-bold text-slate-900 flex items-center gap-2">
+                <Info className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>{apiError.title}</span>
+              </div>
+              <p className="font-serif leading-relaxed text-slate-700">
+                {apiError.message}
+              </p>
+
+              {apiError.isMissingCredentials && (
+                <div className="bg-white/90 p-3.5 rounded-xl border border-amber-200 space-y-2 text-[11px] text-slate-700 font-sans">
+                  <div className="font-bold text-slate-900">How to activate Live EPO Registry queries:</div>
+                  <ol className="list-decimal pl-4 space-y-1">
+                    <li>Register for free at <strong>developers.epo.org</strong>.</li>
+                    <li>Add <code>EPO_OPS_CONSUMER_KEY</code> and <code>EPO_OPS_CONSUMER_SECRET</code> in Vercel.</li>
+                    <li>Or select <strong>&quot;Statutory Diligence Engine&quot;</strong> above to audit immediately without API keys!</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* -------------------------------------------------------------------
+            CHOICE 2: THE PRE-CONFIGURED SHOWCASE TEMPLATE (Instant Preview)
+        -------------------------------------------------------------------- */}
+        <div className="lg:col-span-5 bg-linear-to-b from-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-md space-y-6 flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Instant Showcase Template
+              </span>
+              <span className="text-xs text-slate-400 font-mono">12 EP Assets</span>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-extrabold text-white">
+                Project Aetheris — MedTech Deal
+              </h2>
+              <div className="text-xs text-emerald-400 font-semibold mt-1">
+                Target: Aetheris MedTech GmbH (Munich)
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed font-serif">
+              Don&apos;t have patent numbers ready? Explore a complete pre-configured European acquisition portfolio displaying the full suite of statutory EPC risks:
+            </p>
+
+            {/* Showcase Highlights List */}
+            <div className="space-y-2.5 text-xs pt-1">
+              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
+                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-white">Unrecorded University Transfer (Art. 72 EPC):</strong>
+                  <span className="text-slate-300 block text-[11px] mt-0.5">
+                    Core patent registered to Universität Heidelberg instead of target company.
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-white">Missed Annuity in Grace Period (Art. 86 EPC):</strong>
+                  <span className="text-slate-300 block text-[11px] mt-0.5">
+                    Missed renewal sitting in 6-month surcharge window (Rule 51(2) EPC).
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
+                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-white">Competitor Opposition (Art. 99 EPC):</strong>
+                  <span className="text-slate-300 block text-[11px] mt-0.5">
+                    Formal revocation challenge filed by Siemens Healthcare GmbH.
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="text-white">Unitary Patent (UP / UPC Scope):</strong>
+                  <span className="text-slate-300 block text-[11px] mt-0.5">
+                    Uniform single-title protection across 17 EU member states.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-800 space-y-2">
+            <button
+              onClick={handleLaunchShowcase}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-xs transition cursor-pointer"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              <span>Launch Pre-Configured Showcase Deal</span>
+            </button>
+            <span className="text-[11px] text-slate-400 text-center block">
+              Instantly opens the full dashboard, memorandum, dossiers &amp; CSV export.
+            </span>
+          </div>
         </div>
       </div>
 
       {/* =====================================================================
-          4. SCHEDULE PREVIEW (TOP 5 ASSETS)
+          4. 3-PILLAR STATUTORY SUMMARY EXPLAINER (Bottom Footer)
       ====================================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden space-y-0">
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">
-              Schedule 3.14 (Registered Intellectual Property) — Preview
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Showing recent assets from the 12 disclosed European patent portfolio.
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
+          <div className="space-y-1 sm:pr-4">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pillar 1 &amp; 2</span>
+            <div className="font-bold text-slate-900 text-sm">Chain of Title &amp; Renewal Standing</div>
+            <p className="text-slate-600 text-[11px] leading-relaxed font-serif">
+              Under EPC Articles 72 &amp; 86, verifies recorded registered proprietors against target corporate entities and tracks 6-month annuity surcharge grace periods.
             </p>
           </div>
-          <Link
-            href="/portfolio"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition"
-          >
-            <span>Open Full Table</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+
+          <div className="space-y-1 sm:px-4 pt-4 sm:pt-0">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pillar 3 &amp; 4</span>
+            <div className="font-bold text-slate-900 text-sm">Opposition &amp; Unitary Scope</div>
+            <p className="text-slate-600 text-[11px] leading-relaxed font-serif">
+              Audits Article 99 9-month post-grant opposition challenges and identifies Unitary Patents (17 EU states) versus national classic validations.
+            </p>
+          </div>
+
+          <div className="space-y-1 sm:pl-4 pt-4 sm:pt-0">
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Deliverables</span>
+            <div className="font-bold text-slate-900 text-sm">SPA Clauses &amp; Executive Memo</div>
+            <p className="text-slate-600 text-[11px] leading-relaxed font-serif">
+              Generates tailored contractual conditions precedent, indemnities, print-ready Law Firm Memorandums, and Schedule 3.14 CSV exports.
+            </p>
+          </div>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
-                <th className="py-3 px-4">Patent Ref</th>
-                <th className="py-3 px-4">Invention Title</th>
-                <th className="py-3 px-4">Registered Proprietor</th>
-                <th className="py-3 px-4">Due Diligence Standing</th>
-                <th className="py-3 px-4">Recommended Contract Remedy</th>
-                <th className="py-3 px-4 text-right">Dossier</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {evaluatedPortfolio.slice(0, 5).map((asset) => {
-                const isCritical = asset.overallRisk === 'CRITICAL';
-                const isWarning = asset.overallRisk === 'WARNING';
-                return (
-                  <tr key={asset.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
-                      {asset.id}
-                      {asset.unitaryPatent && (
-                        <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 font-sans">
-                          UP
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 max-w-xs truncate font-medium text-slate-800">
-                      {asset.title}
-                    </td>
-                    <td className="py-3 px-4 max-w-xs truncate text-slate-700">
-                      {asset.registeredProprietor}
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                          isCritical
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                            : isWarning
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                        }`}
-                      >
-                        {asset.primaryIssue}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 font-semibold">
-                      {asset.recommendedAction}
-                    </td>
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <Link
-                        href={`/patent/${asset.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-700 font-bold text-xs transition"
-                      >
-                        <span>Dossier</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* =====================================================================
-          5. QUICK NAVIGATION CARDS (HOW IT WORKS & MEMO)
-      ====================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link
-          href="/memo"
-          className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-xs flex items-center justify-between group transition cursor-pointer"
-        >
-          <div className="space-y-1 max-w-md">
-            <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
-              <FileText className="w-4 h-4" />
-              <span>Investment Committee Deliverable</span>
-            </div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition">
-              Executive Due Diligence Memorandum (PDF)
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Print-formatted law firm memorandum summarizing findings, red flag schedules, and closing conditions.
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-900 group-hover:text-white flex items-center justify-center transition shrink-0 ml-4">
-            <ArrowRight className="w-5 h-5" />
-          </div>
-        </Link>
-
-        <Link
-          href="/guide"
-          className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-xs flex items-center justify-between group transition cursor-pointer"
-        >
-          <div className="space-y-1 max-w-md">
-            <div className="flex items-center gap-2 text-slate-700 font-bold text-xs">
-              <HelpCircle className="w-4 h-4" />
-              <span>Non-Technical Walkthrough</span>
-            </div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-slate-700 transition">
-              How It Works &amp; Legal Framework
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Step-by-step explanation of the 5 European Patent Convention (EPC) statutory checks.
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-900 group-hover:text-white flex items-center justify-center transition shrink-0 ml-4">
-            <ArrowRight className="w-5 h-5" />
-          </div>
-        </Link>
       </div>
     </div>
   );

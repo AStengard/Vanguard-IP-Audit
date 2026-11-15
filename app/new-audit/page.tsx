@@ -51,7 +51,7 @@ export default function NewAuditPage() {
     resetToShowcase();
     setSuccessMessage('Loaded Project Aetheris (12-patent M&A portfolio review) successfully.');
     setTimeout(() => {
-      router.push('/');
+      router.push('/overview');
     }, 800);
   };
 
@@ -59,7 +59,7 @@ export default function NewAuditPage() {
     setTargetCompany('Bavaria BioPharma AG');
     setSuccessMessage('Updated Target Company to "Bavaria BioPharma AG". All 12 patents re-evaluated.');
     setTimeout(() => {
-      router.push('/');
+      router.push('/overview');
     }, 800);
   };
 
@@ -74,7 +74,7 @@ export default function NewAuditPage() {
     setPortfolioData(cleanPortfolio);
     setSuccessMessage('Loaded 100% Verified Clean baseline portfolio.');
     setTimeout(() => {
-      router.push('/');
+      router.push('/overview');
     }, 800);
   };
 
@@ -162,7 +162,7 @@ export default function NewAuditPage() {
       setPortfolioData(livePatents);
       setSuccessMessage(`Successfully audited ${livePatents.length} assets from live EPO Register! Redirecting...`);
       setTimeout(() => {
-        router.push('/');
+        router.push('/overview');
       }, 1200);
     } catch (err: any) {
       setLiveError({
@@ -179,7 +179,7 @@ export default function NewAuditPage() {
       {/* Header */}
       <div className="space-y-3">
         <Link
-          href="/"
+          href="/overview"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
         >
           <ArrowLeft className="w-4 h-4" />

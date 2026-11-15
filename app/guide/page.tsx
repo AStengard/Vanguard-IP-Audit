@@ -29,7 +29,7 @@ export default function GuidePage() {
       ====================================================================== */}
       <div className="space-y-3">
         <Link
-          href="/"
+          href="/overview"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 transition"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -249,10 +249,10 @@ export default function GuidePage() {
           </Link>
 
           <Link
-            href="/new-audit"
+            href="/"
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white transition"
           >
-            <span>Try Live Audit / Preset Scenarios</span>
+            <span>Try Custom Audit / Preset Scenarios</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
