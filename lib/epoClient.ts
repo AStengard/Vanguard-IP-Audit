@@ -128,6 +128,11 @@ export async function normalizePatentNumber(rawInput: string): Promise<Normalize
   }
 }
 
+function formatEpoDate(raw?: string): string {
+  if (!raw || raw.length !== 8) return '';
+  return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
+}
+
 // 2. Parallel Retrieval & XML Parsing for a Normalized Patent
 export async function fetchFullPatentAuditRecord(norm: NormalizedPatentId): Promise<AuditedEpoAsset> {
   const docdbId = norm.docdb!;
@@ -170,6 +175,9 @@ export async function fetchFullPatentAuditRecord(norm: NormalizedPatentId): Prom
   const oppositionPending =
     registerRes.xml.includes('Opposition filed') || legalEvents.some((e) => e.code.includes('OPP'));
 
+  const rawFiling = biblioRes.xml.match(/<application-reference[\s\S]*?<date>(\d{8})<\/date>/)?.[1];
+  const rawGrant = biblioRes.xml.match(/<publication-reference[\s\S]*?<date>(\d{8})<\/date>/)?.[1];
+
   return {
     rawInput: norm.rawInput,
     docdb: docdbId,
@@ -177,8 +185,8 @@ export async function fetchFullPatentAuditRecord(norm: NormalizedPatentId): Prom
     title: titleMatch?.[1]?.trim() || `European Patent ${epodocId}`,
     applicants: applicants.length ? applicants : ['Unknown Proprietor'],
     inventors: [],
-    filingDate: biblioRes.xml.match(/<application-reference[\s\S]*?<date>(\d{8})<\/date>/)?.[1] || '',
-    grantDate: biblioRes.xml.match(/<publication-reference[\s\S]*?<date>(\d{8})<\/date>/)?.[1] || '',
+    filingDate: formatEpoDate(rawFiling),
+    grantDate: formatEpoDate(rawGrant),
     kindCode: norm.kind || 'B1',
     cpcClasses,
     legalEvents,
