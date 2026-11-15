@@ -6,6 +6,11 @@ import Navbar from "@/components/Navbar";
 export const metadata: Metadata = {
   title: "Vanguard IP Audit — M&A Patent Due Diligence Suite",
   description: "Automated European Patent Convention (EPC) Statutory Risk & Chain-of-Title Auditor for M&A and Private Equity",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

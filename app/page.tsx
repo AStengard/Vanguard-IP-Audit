@@ -226,8 +226,8 @@ export default function LandingPortalPage() {
           2. HERO HEADLINE
       ====================================================================== */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-          <Scale className="w-3.5 h-3.5 text-emerald-600" />
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>European Patent M&amp;A Due Diligence Suite</span>
         </div>
 
