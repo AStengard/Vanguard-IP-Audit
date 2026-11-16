@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import {
   Scale,
@@ -25,13 +25,30 @@ import {
   History
 } from 'lucide-react';
 import { useDeal } from '@/components/DealContext';
+import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
+import DemoSpotlight from '@/components/DemoSpotlight';
 
 export default function OverviewPage() {
   const { targetCompany, evaluatedPortfolio, metrics, downloadCsv, resetToShowcase } = useDeal();
+  const { isDemoActive, currentStepIndex, playbackSpeed } = useRecruiterDemo();
 
   // Find the critical red flags to feature on the executive action center
   const criticalAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'CRITICAL');
   const warningAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'WARNING');
+
+  // Recruiter Demo: Smoothly scroll to the Critical Red Flags section during Step 3
+  useEffect(() => {
+    if (!isDemoActive || currentStepIndex !== 2) return;
+
+    const scrollTimer = setTimeout(() => {
+      const el = document.getElementById('demo-critical-flags-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 400 / playbackSpeed);
+
+    return () => clearTimeout(scrollTimer);
+  }, [isDemoActive, currentStepIndex, playbackSpeed]);
 
   if (!targetCompany || evaluatedPortfolio.length === 0) {
     return (
@@ -222,13 +239,21 @@ export default function OverviewPage() {
       {/* =====================================================================
           3. IMMEDIATE ACTION CENTER: CRITICAL RED FLAGS REQUIRING SPA REMEDIES
       ====================================================================== */}
-      <div className="space-y-4">
+      <div id="demo-critical-flags-section" className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-              <span>Priority Red Flags Requiring M&amp;A Remediation</span>
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <ShieldAlert className="w-5 h-5 text-rose-600" />
+                <span>Priority Red Flags Requiring M&amp;A Remediation</span>
+              </h2>
+              {isDemoActive && currentStepIndex === 2 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black uppercase tracking-wider animate-bounce shadow-md">
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>Spotlight Active</span>
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 mt-0.5">
               These items cannot be closed on standard representations and require specific contractual safeguards.
             </p>
@@ -252,60 +277,85 @@ export default function OverviewPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {criticalAssets.map((asset) => (
-              <div
-                key={asset.id}
-                className="bg-white border border-rose-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between hover:border-rose-300 transition"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-sm font-extrabold text-slate-900">
-                      {asset.id}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                      Critical Red Flag
-                    </span>
-                  </div>
+            {criticalAssets.map((asset, idx) => {
+              const isFirst = idx === 0;
 
-                  <div>
-                    <h3 className="font-bold text-xs text-slate-900 line-clamp-1">
-                      {asset.title}
-                    </h3>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      Recorded Owner: <strong>{asset.registeredProprietor}</strong>
+              const cardBody = (
+                <div
+                  className={`bg-white rounded-2xl p-5 shadow-xs flex flex-col justify-between transition-all duration-500 h-full ${
+                    isFirst && isDemoActive && currentStepIndex === 2
+                      ? 'border border-rose-300 bg-linear-to-b from-rose-50/30 to-white'
+                      : 'border border-rose-200 hover:border-rose-300'
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-sm font-extrabold text-slate-900">
+                        {asset.id}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                        Critical Red Flag
+                      </span>
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-xs text-slate-900 line-clamp-1">
+                        {asset.title}
+                      </h3>
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Recorded Owner: <strong>{asset.registeredProprietor}</strong>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-100 space-y-1">
+                      <span className="text-[11px] font-bold text-rose-900 block">
+                        {asset.primaryIssue}
+                      </span>
+                      <span className="text-[11px] text-rose-800 block leading-relaxed">
+                        Registered to <em>&quot;{asset.registeredProprietor}&quot;</em> rather than target.
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                        Recommended SPA Remedy:
+                      </span>
+                      <span className="text-xs font-semibold text-slate-800 block">
+                        {asset.recommendedAction}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-100 space-y-1">
-                    <span className="text-[11px] font-bold text-rose-900 block">
-                      {asset.primaryIssue}
-                    </span>
-                    <span className="text-[11px] text-rose-800 block leading-relaxed">
-                      Registered to <em>&quot;{asset.registeredProprietor}&quot;</em> rather than target.
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                      Recommended SPA Remedy:
-                    </span>
-                    <span className="text-xs font-semibold text-slate-800 block">
-                      {asset.recommendedAction}
-                    </span>
+                  <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end">
+                    <Link
+                      href={`/patent/${asset.id}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-emerald-700 transition"
+                    >
+                      <span>Review Dossier &amp; SPA Clause</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
                 </div>
+              );
 
-                <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end">
-                  <Link
-                    href={`/patent/${asset.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-emerald-700 transition"
+              if (isFirst) {
+                return (
+                  <DemoSpotlight
+                    key={asset.id}
+                    stepIndex={2}
+                    badgeText="⚡ Art. 72 EPC Title Break"
+                    badgeSubtext="Unrecorded university transfer requires Closing CP"
+                    variant="rose"
+                    badgePosition="top-left"
+                    className="h-full"
                   >
-                    <span>Review Dossier &amp; SPA Clause</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            ))}
+                    {cardBody}
+                  </DemoSpotlight>
+                );
+              }
+
+              return <div key={asset.id}>{cardBody}</div>;
+            })}
           </div>
         )}
       </div>

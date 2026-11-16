@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Layers,
@@ -20,11 +20,28 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { useDeal, EvaluatedAsset } from '@/components/DealContext';
+import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
+import DemoSpotlight from '@/components/DemoSpotlight';
 
 export default function PortfolioPage() {
   const { targetCompany, evaluatedPortfolio, metrics, downloadCsv, resetToShowcase } = useDeal();
+  const { isDemoActive, currentStepIndex, playbackSpeed } = useRecruiterDemo();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRisk, setFilterRisk] = useState<'ALL' | 'CRITICAL' | 'WARNING' | 'CLEAN'>('ALL');
+
+  // Recruiter Demo: Automatically scroll down to the portfolio breakdown table during Step 4
+  useEffect(() => {
+    if (!isDemoActive || currentStepIndex !== 3) return;
+
+    const scrollTimer = setTimeout(() => {
+      const tableEl = document.getElementById('portfolio-schedule-table');
+      if (tableEl) {
+        tableEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 500 / playbackSpeed);
+
+    return () => clearTimeout(scrollTimer);
+  }, [isDemoActive, currentStepIndex, playbackSpeed]);
 
   // Filtered list based on search and risk filter
   const filteredAssets = useMemo(() => {
@@ -191,12 +208,44 @@ export default function PortfolioPage() {
         </div>
       </div>
 
+      {/* Recruiter Auto-Demo Step 4 Spotlight Banner */}
+      {isDemoActive && currentStepIndex === 3 && (
+        <div className="bg-emerald-500/10 border-2 border-emerald-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-800 shadow-lg animate-pulse">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black shrink-0">
+              ⚡
+            </div>
+            <div>
+              <strong className="text-slate-900 font-bold block">
+                Step 4 Showcase: Schedule 3.14 Due Diligence Breakdown Table
+              </strong>
+              <span className="text-slate-600 font-serif text-[11px]">
+                Reviewing 12 European patent records cross-audited across Art. 72, 86, 99 EPC &amp; Unitary Patent status.
+              </span>
+            </div>
+          </div>
+          <span className="text-[10px] font-mono font-bold uppercase px-2 py-1 rounded bg-emerald-500 text-slate-950 shrink-0">
+            Auto-Scrolled
+          </span>
+        </div>
+      )}
+
       {/* =====================================================================
-          3. FULL PORTFOLIO TABLE
+          3. FULL PORTFOLIO TABLE WITH DEMOSPOTLIGHT
       ====================================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+      <DemoSpotlight
+        stepIndex={3}
+        badgeText="⚡ Schedule 3.14 Due Diligence Breakdown Table"
+        badgeSubtext="Unitary status & Rule 51(2) EPC grace periods"
+        variant="emerald"
+        badgePosition="top-left"
+      >
+        <div
+          id="portfolio-schedule-table"
+          className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden"
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <th className="py-3.5 px-4 w-12 text-center">#</th>
@@ -362,6 +411,7 @@ export default function PortfolioPage() {
           </div>
         </div>
       </div>
+      </DemoSpotlight>
     </div>
   );
 }

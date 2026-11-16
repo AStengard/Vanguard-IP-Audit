@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -23,10 +23,14 @@ import {
   Key
 } from 'lucide-react';
 import { useDeal } from '@/components/DealContext';
+import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
+import DemoSpotlight from '@/components/DemoSpotlight';
 import { SamplePatentRecord } from '@/lib/sampleDeal';
 
 export default function LandingPortalPage() {
   const router = useRouter();
+  const { isDemoActive, currentStepIndex, playbackSpeed, isPlaying, startDemo } =
+    useRecruiterDemo();
   const {
     targetCompany,
     setTargetCompany,
@@ -42,6 +46,70 @@ export default function LandingPortalPage() {
   const [queryMode, setQueryMode] = useState<'ENGINE' | 'LIVE_EPO'>('ENGINE');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<{ title: string; message: string; isMissingCredentials?: boolean } | null>(null);
+  const [showSyntheticPointer, setShowSyntheticPointer] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // RECRUITER AUTO-DEMO: STEP 1 TYPEWRITER & FORM AUTOMATION
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    if (!isDemoActive || currentStepIndex !== 0 || !isPlaying) {
+      setShowSyntheticPointer(false);
+      return;
+    }
+
+    let isCancelled = false;
+    const timeouts: NodeJS.Timeout[] = [];
+
+    const TARGET_NAME = 'Aetheris MedTech GmbH';
+    const PATENTS_SCHEDULE = 'EP3904118, EP3800201, EP3654120, EP3491024, EP3312890';
+
+    // Start with blank inputs
+    setCustomTarget('');
+    setCustomPatentText('');
+    setShowSyntheticPointer(false);
+
+    const targetCharDelay = 38 / playbackSpeed;
+    const pauseBeforePatents = 250 / playbackSpeed;
+    const patentCharDelay = 22 / playbackSpeed;
+
+    // 1. Type target entity character-by-character
+    for (let i = 1; i <= TARGET_NAME.length; i++) {
+      const t = setTimeout(() => {
+        if (!isCancelled) {
+          setCustomTarget(TARGET_NAME.slice(0, i));
+        }
+      }, i * targetCharDelay);
+      timeouts.push(t);
+    }
+
+    const startPatentTypingTime = TARGET_NAME.length * targetCharDelay + pauseBeforePatents;
+
+    // 2. Type patent schedule numbers character-by-character
+    for (let j = 1; j <= PATENTS_SCHEDULE.length; j++) {
+      const t = setTimeout(() => {
+        if (!isCancelled) {
+          setCustomPatentText(PATENTS_SCHEDULE.slice(0, j));
+        }
+      }, startPatentTypingTime + j * patentCharDelay);
+      timeouts.push(t);
+    }
+
+    // 3. Display animated synthetic pointer on the audit button
+    const pointerDisplayTime =
+      startPatentTypingTime + PATENTS_SCHEDULE.length * patentCharDelay + 200 / playbackSpeed;
+
+    const pointerTimeout = setTimeout(() => {
+      if (!isCancelled) {
+        setShowSyntheticPointer(true);
+      }
+    }, pointerDisplayTime);
+    timeouts.push(pointerTimeout);
+
+    return () => {
+      isCancelled = true;
+      timeouts.forEach((t) => clearTimeout(t));
+    };
+  }, [isDemoActive, currentStepIndex, isPlaying, playbackSpeed]);
 
   // Quick helper to fill sample numbers
   const handleInsertSampleNumbers = () => {
@@ -241,6 +309,24 @@ export default function LandingPortalPage() {
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-serif">
           Automated statutory legal risk audit for technology and life sciences transactions. Evaluates Chain of Title (Art. 72), Maintenance Standing (Art. 86), Opposition Vulnerability (Art. 99), and Unitary Patent Scope.
         </p>
+
+        {/* ⚡ Recruiter Auto-Demo Launcher CTA */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={startDemo}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-linear-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-700 text-white font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl border border-slate-700 hover:border-amber-400/50 transition-all duration-200 cursor-pointer group hover:-translate-y-0.5"
+            title="Start automated 5-step recruiter walkthrough"
+          >
+            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs shadow-xs group-hover:scale-110 transition-transform">
+              ⚡
+            </span>
+            <span>⚡ Watch Recruiter Demo</span>
+            <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              Auto Tour
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* =====================================================================
@@ -269,9 +355,16 @@ export default function LandingPortalPage() {
           <form onSubmit={handleRunCustomAudit} className="space-y-4">
             {/* Target Entity Input */}
             <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-800">
-                Target Company Legal Entity
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-bold text-slate-800">
+                  Target Company Legal Entity
+                </label>
+                {isDemoActive && currentStepIndex === 0 && (
+                  <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 animate-pulse">
+                    ⚡ Auto-Typing Target...
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -279,7 +372,11 @@ export default function LandingPortalPage() {
                   value={customTarget}
                   onChange={(e) => setCustomTarget(e.target.value)}
                   placeholder="e.g. BioNTech SE or Siemens Healthineers AG"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition"
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs font-medium focus:outline-none transition ${
+                    isDemoActive && currentStepIndex === 0
+                      ? 'bg-emerald-50/20 border-2 border-emerald-500 ring-2 ring-emerald-400/20 text-slate-900 font-bold'
+                      : 'bg-slate-50 border border-slate-200 text-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900'
+                  }`}
                   required
                 />
               </div>
@@ -291,13 +388,19 @@ export default function LandingPortalPage() {
                 <label className="block text-xs font-bold text-slate-800">
                   European Patent Asset Numbers
                 </label>
-                <button
-                  type="button"
-                  onClick={handleInsertSampleNumbers}
-                  className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 transition cursor-pointer"
-                >
-                  + Insert sample EP numbers
-                </button>
+                {isDemoActive && currentStepIndex === 0 ? (
+                  <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 animate-pulse">
+                    ⚡ Auto-Filling Schedule...
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleInsertSampleNumbers}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 transition cursor-pointer"
+                  >
+                    + Insert sample EP numbers
+                  </button>
+                )}
               </div>
 
               <textarea
@@ -305,7 +408,11 @@ export default function LandingPortalPage() {
                 value={customPatentText}
                 onChange={(e) => setCustomPatentText(e.target.value)}
                 placeholder="Enter EP numbers (e.g. EP3904118, EP3800201, EP3654120)..."
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition"
+                className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono placeholder:text-slate-400 focus:outline-none transition ${
+                  isDemoActive && currentStepIndex === 0
+                    ? 'bg-emerald-50/20 border-2 border-emerald-500 ring-2 ring-emerald-400/20 text-slate-900 font-bold'
+                    : 'bg-slate-50 border border-slate-200 text-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900'
+                }`}
                 required
               />
               <span className="text-[11px] text-slate-400 block">
@@ -313,57 +420,87 @@ export default function LandingPortalPage() {
               </span>
             </div>
 
-            {/* Audit Engine Mode Selector */}
-            <div className="pt-2 border-t border-slate-100 space-y-2">
-              <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
-                Select Diligence Execution Mode:
-              </span>
+            {/* Audit Engine Mode Selector with DemoSpotlight */}
+            <DemoSpotlight
+              stepIndex={0}
+              badgeText="⚡ Automated Fuzzy-Matching against EPO Register"
+              variant="emerald"
+              badgePosition="top-right"
+              className="pt-2 border-t border-slate-100"
+            >
+              <div className="space-y-2 p-1">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                  Select Diligence Execution Mode:
+                </span>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setQueryMode('ENGINE')}
-                  className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                    queryMode === 'ENGINE'
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
-                  }`}
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span>Statutory Diligence Engine</span>
-                    {queryMode === 'ENGINE' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-                  </div>
-                  <div className={`text-[11px] mt-0.5 ${queryMode === 'ENGINE' ? 'text-slate-300' : 'text-slate-500'}`}>
-                    Instant statutory checks, chain of title &amp; SPA contract remedies.
-                  </div>
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setQueryMode('ENGINE')}
+                    className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                      queryMode === 'ENGINE'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                    }`}
+                  >
+                    <div className="font-bold flex items-center justify-between">
+                      <span>Statutory Diligence Engine</span>
+                      {queryMode === 'ENGINE' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                    </div>
+                    <div className={`text-[11px] mt-0.5 ${queryMode === 'ENGINE' ? 'text-slate-300' : 'text-slate-500'}`}>
+                      Instant statutory checks, chain of title &amp; SPA contract remedies.
+                    </div>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => setQueryMode('LIVE_EPO')}
-                  className={`p-3 rounded-xl border text-left transition cursor-pointer ${
-                    queryMode === 'LIVE_EPO'
-                      ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
-                      : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
-                  }`}
-                >
-                  <div className="font-bold flex items-center justify-between">
-                    <span>Live EPO Register API</span>
-                    {queryMode === 'LIVE_EPO' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-                  </div>
-                  <div className={`text-[11px] mt-0.5 ${queryMode === 'LIVE_EPO' ? 'text-slate-300' : 'text-slate-500'}`}>
-                    Queries official EPO OPS v3.2 REST endpoints live.
-                  </div>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setQueryMode('LIVE_EPO')}
+                    className={`p-3 rounded-xl border text-left transition cursor-pointer ${
+                      queryMode === 'LIVE_EPO'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                    }`}
+                  >
+                    <div className="font-bold flex items-center justify-between">
+                      <span>Live EPO Register API</span>
+                      {queryMode === 'LIVE_EPO' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
+                    </div>
+                    <div className={`text-[11px] mt-0.5 ${queryMode === 'LIVE_EPO' ? 'text-slate-300' : 'text-slate-500'}`}>
+                      Queries official EPO OPS v3.2 REST endpoints live.
+                    </div>
+                  </button>
+                </div>
               </div>
-            </div>
+            </DemoSpotlight>
 
-            {/* Submit Button */}
-            <div className="pt-2">
+            {/* Submit Button with Synthetic Pointer & Glowing Ring */}
+            <div className="pt-2 relative">
+              {/* Synthetic Pointer cursor pointing at the button */}
+              {isDemoActive && currentStepIndex === 0 && showSyntheticPointer && (
+                <div className="absolute -top-10 right-1/4 sm:right-1/3 z-30 pointer-events-none flex items-center gap-1.5 animate-bounce">
+                  <div className="relative">
+                    <svg
+                      className="w-7 h-7 text-emerald-400 drop-shadow-lg fill-emerald-400 stroke-slate-900 stroke-2 -rotate-45"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M3 3l7 18 3-7 7-3L3 3z" />
+                    </svg>
+                    <span className="absolute -inset-1 rounded-full bg-emerald-400/50 animate-ping -z-10" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-emerald-300 border border-emerald-500/50 text-[10px] font-mono font-bold shadow-xl">
+                    Triggering 5-Pillar Audit...
+                  </span>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs shadow-xs transition disabled:opacity-50 cursor-pointer"
+                className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-extrabold text-xs shadow-xs transition disabled:opacity-50 cursor-pointer relative ${
+                  isDemoActive && currentStepIndex === 0 && showSyntheticPointer
+                    ? 'bg-slate-900 text-white ring-4 ring-emerald-400 ring-offset-2 ring-offset-white shadow-xl shadow-emerald-500/25 scale-[1.01]'
+                    : 'bg-slate-900 hover:bg-slate-800 text-white'
+                }`}
               >
                 {isSubmitting ? (
                   <>
@@ -372,7 +509,7 @@ export default function LandingPortalPage() {
                   </>
                 ) : (
                   <>
-                    <span>Run Statutory Due Diligence Audit</span>
+                    <span>Run 5-Pillar Statutory M&amp;A Audit</span>
                     <ArrowRight className="w-4 h-4 text-emerald-400" />
                   </>
                 )}

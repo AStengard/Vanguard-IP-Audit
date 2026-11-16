@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import {
   Printer,
@@ -15,12 +15,16 @@ import {
   CheckCircle2,
   XCircle,
   FileText,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { useDeal } from '@/components/DealContext';
+import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
+import DemoSpotlight from '@/components/DemoSpotlight';
 
 export default function MemoPage() {
   const { targetCompany, evaluatedPortfolio, metrics, downloadCsv, resetToShowcase } = useDeal();
+  const { isDemoActive, currentStepIndex, playbackSpeed } = useRecruiterDemo();
 
   const criticalAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'CRITICAL');
   const warningAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'WARNING');
@@ -29,6 +33,20 @@ export default function MemoPage() {
   const handlePrint = () => {
     window.print();
   };
+
+  // Recruiter Demo: Smoothly scroll down to showcase Section 2 Contractual Remedies during Step 5
+  useEffect(() => {
+    if (!isDemoActive || currentStepIndex !== 4) return;
+
+    const scrollTimer = setTimeout(() => {
+      const remediesEl = document.getElementById('demo-spa-remedies-section');
+      if (remediesEl) {
+        remediesEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 600 / playbackSpeed);
+
+    return () => clearTimeout(scrollTimer);
+  }, [isDemoActive, currentStepIndex, playbackSpeed]);
 
   if (evaluatedPortfolio.length === 0) {
     return (
@@ -162,69 +180,95 @@ export default function MemoPage() {
           </div>
         </div>
 
-        {/* Section 2: Priority Findings & Contractual Remedies */}
-        <div className="space-y-4 font-sans">
-          <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-1">
-            2. Priority Red Flags &amp; Mandatory Contractual Remedies
-          </h2>
-          <p className="text-xs text-slate-700 font-serif">
-            The following assets exhibit statutory title breaks or procedural vulnerabilities requiring specific conditions precedent, indemnity protections, or escrow retentions prior to deal closing:
-          </p>
-
-          <div className="space-y-4">
-            {criticalAssets.map((asset) => (
-              <div
-                key={asset.id}
-                className="bg-rose-50/50 border border-rose-200 rounded-xl p-4 text-xs space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-rose-950 text-sm">{asset.id}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-200/80 text-rose-900">
-                      CRITICAL RISK
-                    </span>
-                  </div>
-                  <span className="text-slate-500 font-mono text-[11px]">App: {asset.applicationNumber}</span>
-                </div>
-
-                <div className="font-bold text-slate-900">{asset.title}</div>
-                <div className="text-slate-700 font-serif">
-                  <strong>Deficiency:</strong> {asset.primaryIssue} Recorded owner on the official register is &quot;{asset.registeredProprietor}&quot; rather than the target company &quot;{targetCompany}&quot;.
-                </div>
-
-                <div className="bg-white p-3 rounded-lg border border-rose-200 text-slate-800 font-serif">
-                  <strong>Recommended SPA Provision:</strong> &ldquo;{asset.recommendedAction}&rdquo;
-                </div>
+        {/* Recruiter Auto-Demo Step 5 Showcase Banner */}
+        {isDemoActive && currentStepIndex === 4 && (
+          <div className="bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 text-white shadow-xl space-y-1.5 animate-pulse print:hidden font-sans">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                <Sparkles className="w-4 h-4" />
+                <span>⚡ Step 5 Showcase: Auto-Generated Legal Memorandum &amp; SPA Covenants</span>
               </div>
-            ))}
-
-            {warningAssets.map((asset) => (
-              <div
-                key={asset.id}
-                className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 text-xs space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-amber-950 text-sm">{asset.id}</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">
-                      MATERIAL WARNING
-                    </span>
-                  </div>
-                  <span className="text-slate-500 font-mono text-[11px]">App: {asset.applicationNumber}</span>
-                </div>
-
-                <div className="font-bold text-slate-900">{asset.title}</div>
-                <div className="text-slate-700 font-serif">
-                  <strong>Deficiency:</strong> {asset.primaryIssue}
-                </div>
-
-                <div className="bg-white p-3 rounded-lg border border-amber-200 text-slate-800 font-serif">
-                  <strong>Recommended SPA Provision:</strong> &ldquo;{asset.recommendedAction}&rdquo;
-                </div>
-              </div>
-            ))}
+              <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
+                Closing CPs &amp; Indemnity
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-300 font-serif leading-relaxed">
+              Automated M&amp;A remediation provisions ready for inclusion in the draft Share Purchase Agreement (SPA Section 4.14 / Schedule 3.14).
+            </p>
           </div>
-        </div>
+        )}
+
+        {/* Section 2: Priority Findings & Contractual Remedies with DemoSpotlight */}
+        <DemoSpotlight
+          stepIndex={4}
+          badgeText="⚡ SPA Closing Covenants & Specific Indemnity"
+          badgeSubtext="Mandatory Condition Precedent § 7.02(f)"
+          variant="emerald"
+          badgePosition="top-left"
+        >
+          <div id="demo-spa-remedies-section" className="space-y-4 font-sans p-2 rounded-2xl">
+            <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-1">
+              2. Priority Red Flags &amp; Mandatory Contractual Remedies
+            </h2>
+            <p className="text-xs text-slate-700 font-serif">
+              The following assets exhibit statutory title breaks or procedural vulnerabilities requiring specific conditions precedent, indemnity protections, or escrow retentions prior to deal closing:
+            </p>
+
+            <div className="space-y-4">
+              {criticalAssets.map((asset) => (
+                <div
+                  key={asset.id}
+                  className="bg-rose-50/50 border border-rose-200 rounded-xl p-4 text-xs space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-rose-950 text-sm">{asset.id}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-200/80 text-rose-900">
+                        CRITICAL RISK
+                      </span>
+                    </div>
+                    <span className="text-slate-500 font-mono text-[11px]">App: {asset.applicationNumber}</span>
+                  </div>
+
+                  <div className="font-bold text-slate-900">{asset.title}</div>
+                  <div className="text-slate-700 font-serif">
+                    <strong>Deficiency:</strong> {asset.primaryIssue} Recorded owner on the official register is &quot;{asset.registeredProprietor}&quot; rather than the target company &quot;{targetCompany}&quot;.
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border border-rose-200 text-slate-800 font-serif">
+                    <strong>Recommended SPA Provision:</strong> &ldquo;{asset.recommendedAction}&rdquo;
+                  </div>
+                </div>
+              ))}
+
+              {warningAssets.map((asset) => (
+                <div
+                  key={asset.id}
+                  className="bg-amber-50/50 border border-amber-200 rounded-xl p-4 text-xs space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-amber-950 text-sm">{asset.id}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900">
+                        MATERIAL WARNING
+                      </span>
+                    </div>
+                    <span className="text-slate-500 font-mono text-[11px]">App: {asset.applicationNumber}</span>
+                  </div>
+
+                  <div className="font-bold text-slate-900">{asset.title}</div>
+                  <div className="text-slate-700 font-serif">
+                    <strong>Deficiency:</strong> {asset.primaryIssue}
+                  </div>
+
+                  <div className="bg-white p-3 rounded-lg border border-amber-200 text-slate-800 font-serif">
+                    <strong>Recommended SPA Provision:</strong> &ldquo;{asset.recommendedAction}&rdquo;
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </DemoSpotlight>
 
         {/* Section 3: Recommended Reps & Warranties */}
         <div className="space-y-3 font-sans">

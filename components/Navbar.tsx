@@ -14,10 +14,12 @@ import {
   History
 } from 'lucide-react';
 import { useDeal } from './DealContext';
+import { useRecruiterDemo } from './RecruiterDemoContext';
 
 export default function Navbar() {
   const pathname = usePathname();
   const { targetCompany, downloadCsv, savedAudits } = useDeal();
+  const { startDemo, isDemoActive } = useRecruiterDemo();
 
   const navLinks = [
     { href: '/overview', label: 'Overview', icon: LayoutDashboard },
@@ -34,17 +36,22 @@ export default function Navbar() {
             LEFT: STYLIZED BRAND WORDMARK (No law emoji)
         ==================================================================== */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 group shrink-0">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-[17px] font-black tracking-tight text-slate-900 group-hover:text-slate-700 transition font-sans">
-                VANGUARD
-              </span>
-              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-800 transition font-sans">
-                IP AUDIT
+          <Link href="/" className="flex flex-col group shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[17px] font-black tracking-tight text-slate-900 group-hover:text-slate-700 transition font-sans">
+                  VANGUARD
+                </span>
+                <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 group-hover:text-slate-800 transition font-sans">
+                  IP AUDIT
+                </span>
+              </div>
+              <span className="hidden sm:inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                M&amp;A
               </span>
             </div>
-            <span className="hidden sm:inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-              M&amp;A
+            <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-600 transition tracking-wide -mt-0.5">
+              By Alfred Stengard
             </span>
           </Link>
 
@@ -84,6 +91,22 @@ export default function Navbar() {
             RIGHT: UNIFORM ACTION CONTROLS (Identical height, font & radius)
         ==================================================================== */}
         <div className="flex items-center gap-2">
+          {/* Recruiter Auto-Demo Launcher */}
+          <button
+            type="button"
+            onClick={startDemo}
+            className={`inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg text-xs font-bold transition shadow-xs cursor-pointer border ${
+              isDemoActive
+                ? 'bg-amber-100 text-amber-950 border-amber-400 ring-2 ring-amber-400/40'
+                : 'bg-linear-to-r from-amber-500/10 via-amber-400/15 to-emerald-500/10 hover:from-amber-500/20 hover:to-emerald-500/20 text-slate-800 border-amber-300 hover:border-amber-400'
+            }`}
+            title="Start automated 5-step recruiter walkthrough"
+          >
+            <span className="text-amber-500 text-sm">⚡</span>
+            <span className="hidden sm:inline">Watch Recruiter Demo</span>
+            <span className="sm:hidden">⚡ Demo</span>
+          </button>
+
           {/* Active Target Indicator Pill */}
           {targetCompany ? (
             <Link
