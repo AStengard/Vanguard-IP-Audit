@@ -44,7 +44,15 @@ export default function RootLayout({
                   <span className="text-slate-500">European Patent M&amp;A Due Diligence Suite</span>
                 </div>
                 <div className="text-xs text-slate-500 font-medium">
-                  By <strong className="text-slate-900 font-bold">Alfred Stengard</strong>
+                  By{" "}
+                  <a
+                    href="https://astengard.github.io/cv/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-900 hover:text-emerald-600 font-bold underline transition inline-flex items-center gap-1"
+                  >
+                    <span>Alfred Stengard</span>
+                  </a>
                 </div>
               </div>
             </footer>

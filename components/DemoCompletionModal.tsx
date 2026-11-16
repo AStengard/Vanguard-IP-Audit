@@ -183,16 +183,15 @@ export default function DemoCompletionModal() {
             </button>
           </div>
 
-          {/* Contact Alfred Stengard / GitHub */}
+          {/* Alfred Stengard Digital CV / Portfolio */}
           <a
-            href="https://github.com/alfredstengard"
+            href="https://astengard.github.io/cv/"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/70 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold border border-slate-700/80 transition cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 hover:text-white text-xs font-bold border border-slate-700/80 hover:border-emerald-500/50 transition cursor-pointer group shadow-xs"
           >
-            <Github className="w-4 h-4 text-slate-400" />
-            <span>Contact Alfred Stengard / GitHub Profile</span>
-            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+            <ExternalLink className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span>Alfred Stengard — View Digital CV</span>
           </a>
         </div>
       </div>

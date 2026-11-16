@@ -49,6 +49,22 @@ export default function LandingPortalPage() {
   const [showSyntheticPointer, setShowSyntheticPointer] = useState(false);
 
   // --------------------------------------------------------------------------
+  // RECRUITER AUTO-DEMO: STEP 1 AUTO-SCROLL TO INPUT FORM
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    if (!isDemoActive || currentStepIndex !== 0) return;
+
+    const scrollTimer = setTimeout(() => {
+      const formEl = document.getElementById('custom-audit-form-section');
+      if (formEl) {
+        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 250 / playbackSpeed);
+
+    return () => clearTimeout(scrollTimer);
+  }, [isDemoActive, currentStepIndex, playbackSpeed]);
+
+  // --------------------------------------------------------------------------
   // RECRUITER AUTO-DEMO: STEP 1 TYPEWRITER & FORM AUTOMATION
   // --------------------------------------------------------------------------
   useEffect(() => {
@@ -336,7 +352,10 @@ export default function LandingPortalPage() {
         {/* -------------------------------------------------------------------
             CHOICE 1: THE STANDARD FUNCTIONAL APPLICATION (User inputs info)
         -------------------------------------------------------------------- */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+        <div
+          id="custom-audit-form-section"
+          className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-24"
+        >
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-900 text-white">

@@ -16,7 +16,8 @@ import {
   XCircle,
   FileText,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  ExternalLink
 } from 'lucide-react';
 import { useDeal } from '@/components/DealContext';
 import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
@@ -112,6 +113,17 @@ export default function MemoPage() {
             <Printer className="w-4 h-4 text-emerald-400" />
             <span>Print / Save as PDF</span>
           </button>
+
+          <a
+            href="https://astengard.github.io/cv/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 font-bold text-xs shadow-2xs transition cursor-pointer"
+            title="Alfred Stengard — Digital CV"
+          >
+            <ExternalLink className="w-4 h-4 text-emerald-600" />
+            <span>Digital CV</span>
+          </a>
         </div>
       </div>
 
