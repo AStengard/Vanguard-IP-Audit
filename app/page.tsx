@@ -68,9 +68,9 @@ export default function LandingPortalPage() {
     setCustomPatentText('');
     setShowSyntheticPointer(false);
 
-    const targetCharDelay = 38 / playbackSpeed;
-    const pauseBeforePatents = 250 / playbackSpeed;
-    const patentCharDelay = 22 / playbackSpeed;
+    const targetCharDelay = 75 / playbackSpeed;
+    const pauseBeforePatents = 600 / playbackSpeed;
+    const patentCharDelay = 45 / playbackSpeed;
 
     // 1. Type target entity character-by-character
     for (let i = 1; i <= TARGET_NAME.length; i++) {
@@ -96,7 +96,7 @@ export default function LandingPortalPage() {
 
     // 3. Display animated synthetic pointer on the audit button
     const pointerDisplayTime =
-      startPatentTypingTime + PATENTS_SCHEDULE.length * patentCharDelay + 200 / playbackSpeed;
+      startPatentTypingTime + PATENTS_SCHEDULE.length * patentCharDelay + 400 / playbackSpeed;
 
     const pointerTimeout = setTimeout(() => {
       if (!isCancelled) {

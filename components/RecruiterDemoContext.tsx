@@ -32,7 +32,7 @@ export const DEMO_STEPS: DemoStep[] = [
     title: "Target Ingestion & Auto-Fill",
     description: "Simulating form entry for Aetheris MedTech GmbH & 5 European patent numbers.",
     path: "/",
-    duration: 5.5,
+    duration: 11,
   },
   {
     id: "step-2-scanner",
@@ -41,7 +41,7 @@ export const DEMO_STEPS: DemoStep[] = [
     title: "Statutory Audit Scanner HUD",
     description: "Executing real-time simulated EPO OPS registry checks (Art. 72, Art. 86, Art. 99 EPC).",
     path: "/",
-    duration: 4,
+    duration: 8,
   },
   {
     id: "step-3-overview",
@@ -50,7 +50,7 @@ export const DEMO_STEPS: DemoStep[] = [
     title: "Overview & Red Flag Spotlight",
     description: "Spotlighting Critical Red Flags: Art. 72 unrecorded assignment & university ownership.",
     path: "/overview",
-    duration: 4.5,
+    duration: 9,
   },
   {
     id: "step-4-portfolio",
@@ -59,7 +59,7 @@ export const DEMO_STEPS: DemoStep[] = [
     title: "Portfolio Table & EPC Filters",
     description: "Showcasing patent breakdown schedule, Unitary status, and statutory filtering.",
     path: "/portfolio",
-    duration: 5,
+    duration: 10,
   },
   {
     id: "step-5-memo",
@@ -68,7 +68,7 @@ export const DEMO_STEPS: DemoStep[] = [
     title: "Executive Memorandum & Covenants",
     description: "Reviewing partner-level statutory risk memorandum, Closing Conditions Precedent, and Specific Indemnity.",
     path: "/memo",
-    duration: 6,
+    duration: 12,
   },
 ];
 

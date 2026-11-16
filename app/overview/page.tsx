@@ -45,7 +45,7 @@ export default function OverviewPage() {
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 400 / playbackSpeed);
+    }, 800 / playbackSpeed);
 
     return () => clearTimeout(scrollTimer);
   }, [isDemoActive, currentStepIndex, playbackSpeed]);
@@ -122,6 +122,15 @@ export default function OverviewPage() {
             <span>View Full Schedule ({metrics.total} Assets)</span>
             <ArrowRight className="w-4 h-4 text-emerald-400" />
           </Link>
+
+          <button
+            onClick={downloadCsv}
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs shadow-2xs transition cursor-pointer"
+            title="Download Schedule 3.14 spreadsheet (CSV)"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Export CSV</span>
+          </button>
 
           <Link
             href="/memo"

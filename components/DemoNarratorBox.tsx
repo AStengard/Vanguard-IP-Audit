@@ -1,0 +1,169 @@
+"use client";
+
+import React, { useState } from "react";
+import {
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Scale,
+  ShieldAlert,
+  FileText,
+  Database,
+} from "lucide-react";
+import { useRecruiterDemo } from "./RecruiterDemoContext";
+
+interface StepNarration {
+  tag: string;
+  tagColor: string;
+  icon: React.ElementType;
+  title: string;
+  body: string;
+  dealImpact: string;
+}
+
+const STEP_NARRATIONS: Record<number, StepNarration> = {
+  0: {
+    tag: "Target Ingestion",
+    tagColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    icon: Database,
+    title: "Automated Target & Portfolio Ingestion",
+    body: "The auditor simulates ingestion of target entity 'Aetheris MedTech GmbH' and 5 European patent assets, preparing to cross-examine company disclosures against official European Patent Register records.",
+    dealImpact: "Buyers routinely discover target companies don't legally own the patents disclosed on Schedule 3.14 due to missing written assignment deeds.",
+  },
+  1: {
+    tag: "Live EPO Query",
+    tagColor: "bg-teal-500/20 text-teal-300 border-teal-500/30",
+    icon: Scale,
+    title: "5-Pillar Statutory Registry Scanner",
+    body: "Querying simulated EPO OPS v3.2 REST endpoints across statutory pillars: Art. 72 (Chain of Title), Art. 86 (Annuity Maintenance), Art. 99 (Opposition Period), and Unitary Patent standing.",
+    dealImpact: "Manual patent register inspection across 39 member states takes days. Vanguard's statutory engine parses legal status and INPADOC legal events in seconds.",
+  },
+  2: {
+    tag: "Art. 72 EPC Title Break",
+    tagColor: "bg-rose-500/20 text-rose-300 border-rose-500/30",
+    icon: ShieldAlert,
+    title: "Critical Red Flag: Unrecorded Transfer",
+    body: "The engine flags EP3491024B1: recorded proprietor is 'Charité – Universitätsmedizin Berlin', NOT the target company! Under Art. 72 EPC, any assignment without an executed written deed is void.",
+    dealImpact: "Closing Condition Precedent (CP § 7.02(f)): Vanguard automatically drafts a mandatory covenant requiring an executed Confirmatory Assignment Deed prior to deal closing.",
+  },
+  3: {
+    tag: "Schedule 3.14 Table",
+    tagColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+    icon: FileText,
+    title: "Schedule 3.14 Portfolio Breakdown",
+    body: "Displaying the complete audited patent schedule with legal standing, national validation status across DE/FR/GB/IT, Unitary Patent coverage, and Rule 51(2) renewal grace periods.",
+    dealImpact: "Generates audit-ready Schedule 3.14 disclosures for the Share Purchase Agreement (SPA) and provides instant 1-click CSV spreadsheet export for investment committees.",
+  },
+  4: {
+    tag: "Executive Deliverables",
+    tagColor: "bg-teal-500/20 text-teal-300 border-teal-500/30",
+    icon: Sparkles,
+    title: "Law Firm Memo & SPA Covenants",
+    body: "Reviewing the formal partner-level Legal Due Diligence Memorandum, complete with tailored SPA warranty clauses (Section 4.14), specific indemnity protections, and closing escrow retentions.",
+    dealImpact: "Bridges the gap between patent data and corporate law: translates complex patent register defects directly into binding transactional contract clauses.",
+  },
+};
+
+export default function DemoNarratorBox() {
+  const { isDemoActive, currentStepIndex, isCompleted } = useRecruiterDemo();
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+
+  // Only display when demo is active and before the final completion celebration card
+  if (!isDemoActive || isCompleted) return null;
+
+  const narration = STEP_NARRATIONS[currentStepIndex] || STEP_NARRATIONS[0];
+  const Icon = narration.icon;
+
+  return (
+    <aside
+      aria-label="Recruiter Demo Explainer Box"
+      className="fixed top-20 right-3 sm:right-6 z-40 w-[94%] sm:w-92 md:w-96 transition-all duration-300 animate-in fade-in slide-in-from-right-4 duration-300 print:hidden"
+    >
+      <div className="relative bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden">
+        {/* Subtle glowing top accent line */}
+        <div className="h-0.5 bg-linear-to-r from-emerald-500 via-teal-400 to-amber-400" />
+
+        {/* Header Row */}
+        <div className="p-3 sm:px-4 sm:py-3 border-b border-slate-800 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="flex h-2 w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+            </span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400 truncate">
+                Tour Commentary
+              </span>
+              <span className="text-slate-600">•</span>
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
+                Step {currentStepIndex + 1}/5
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {/* Collapse / Expand Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-[10px] font-mono transition cursor-pointer flex items-center gap-1"
+              title={isCollapsed ? "Expand explanation box" : "Collapse explanation box"}
+            >
+              {isCollapsed ? (
+                <>
+                  <span>Show</span>
+                  <ChevronDown className="w-3 h-3" />
+                </>
+              ) : (
+                <>
+                  <span>Hide</span>
+                  <ChevronUp className="w-3 h-3" />
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Body Content (Collapsible) */}
+        {!isCollapsed && (
+          <div
+            key={currentStepIndex}
+            className="p-3.5 sm:p-4 space-y-3 animate-in fade-in duration-200"
+          >
+            {/* Category Tag & Step Title */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${narration.tagColor}`}
+                >
+                  {narration.tag}
+                </span>
+              </div>
+              <h3 className="text-xs sm:text-sm font-black tracking-tight text-white flex items-center gap-1.5">
+                <Icon className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{narration.title}</span>
+              </h3>
+            </div>
+
+            {/* What is happening explanation */}
+            <p className="text-[11px] text-slate-300 leading-relaxed font-serif">
+              {narration.body}
+            </p>
+
+            {/* Why this matters / Deal Impact Box */}
+            <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                <Info className="w-3 h-3 shrink-0" />
+                <span>Deal &amp; Audit Impact:</span>
+              </span>
+              <p className="text-[11px] text-slate-300 leading-normal font-serif">
+                {narration.dealImpact}
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}

@@ -4,11 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  FileSpreadsheet,
   FileText,
   HelpCircle,
   Layers,
-  Building2,
   Plus,
   LayoutDashboard,
   History
@@ -18,14 +16,14 @@ import { useRecruiterDemo } from './RecruiterDemoContext';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { targetCompany, downloadCsv, savedAudits } = useDeal();
+  const { savedAudits } = useDeal();
   const { startDemo, isDemoActive } = useRecruiterDemo();
 
   const navLinks = [
     { href: '/overview', label: 'Overview', icon: LayoutDashboard },
     { href: '/portfolio', label: 'Portfolio Schedule', icon: Layers },
-    { href: '/history', label: 'Audit History', icon: History, count: savedAudits?.length },
     { href: '/memo', label: 'Executive Memo', icon: FileText },
+    { href: '/history', label: 'Audit History', icon: History, count: savedAudits?.length },
     { href: '/guide', label: 'How It Works', icon: HelpCircle },
   ];
 
@@ -46,9 +44,6 @@ export default function Navbar() {
                   IP AUDIT
                 </span>
               </div>
-              <span className="hidden sm:inline-block text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                M&amp;A
-              </span>
             </div>
             <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-600 transition tracking-wide -mt-0.5">
               By Alfred Stengard
@@ -66,18 +61,16 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-semibold transition ${
-                    isActive
+                  className={`inline-flex items-center gap-1.5 h-7 px-3 rounded-lg text-xs font-semibold transition ${isActive
                       ? 'bg-white text-slate-900 shadow-2xs font-bold'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                  }`}
+                    }`}
                 >
                   <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
                   <span>{link.label}</span>
                   {link.count !== undefined && link.count > 0 && (
-                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                      isActive ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
-                    }`}>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${isActive ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
+                      }`}>
                       {link.count}
                     </span>
                   )}
@@ -90,65 +83,32 @@ export default function Navbar() {
         {/* ===================================================================
             RIGHT: UNIFORM ACTION CONTROLS (Identical height, font & radius)
         ==================================================================== */}
-        <div className="flex items-center gap-2">
-          {/* Recruiter Auto-Demo Launcher */}
+        <div className="flex items-center gap-2.5">
+          {/* Recruiter Auto-Demo Launcher (Polished Green) */}
           <button
             type="button"
             onClick={startDemo}
-            className={`inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg text-xs font-bold transition shadow-xs cursor-pointer border ${
-              isDemoActive
-                ? 'bg-amber-100 text-amber-950 border-amber-400 ring-2 ring-amber-400/40'
-                : 'bg-linear-to-r from-amber-500/10 via-amber-400/15 to-emerald-500/10 hover:from-amber-500/20 hover:to-emerald-500/20 text-slate-800 border-amber-300 hover:border-amber-400'
-            }`}
-            title="Start automated 5-step recruiter walkthrough"
+            className={`inline-flex items-center gap-2 h-9 px-3.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-xs border ${isDemoActive
+                ? 'bg-emerald-700 text-white border-emerald-800 ring-2 ring-emerald-400/50 shadow-emerald-500/20'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-600/80 hover:shadow-sm'
+              }`}
+            title="Watch 5-step automated walkthrough of all Vanguard IP Audit features"
           >
-            <span className="text-amber-500 text-sm">⚡</span>
-            <span className="hidden sm:inline">Watch Recruiter Demo</span>
-            <span className="sm:hidden">⚡ Demo</span>
+            <span className="flex h-2 w-2 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+            </span>
+            <span className="hidden sm:inline font-extrabold tracking-tight">Watch Recruiter Demo</span>
+            <span className="sm:hidden font-extrabold">⚡ Demo</span>
           </button>
-
-          {/* Active Target Indicator Pill */}
-          {targetCompany ? (
-            <Link
-              href="/"
-              className="hidden sm:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold transition"
-              title="Click to change target entity or start new audit"
-            >
-              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="text-slate-500">Target:</span>
-              <span className="font-bold text-slate-900 max-w-[130px] truncate">{targetCompany}</span>
-            </Link>
-          ) : (
-            <Link
-              href="/"
-              className="hidden sm:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-slate-50/70 hover:bg-slate-100 text-slate-500 border border-dashed border-slate-300 text-xs font-medium transition"
-              title="No target entity selected yet — click to configure audit"
-            >
-              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span>No Target Selected</span>
-            </Link>
-          )}
-
-          {/* Export CSV Button (Only when target is loaded) */}
-          {targetCompany && (
-            <button
-              onClick={downloadCsv}
-              className="hidden md:inline-flex items-center gap-1.5 h-8.5 px-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition cursor-pointer"
-              title="Download Schedule 3.14 spreadsheet (CSV)"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Export CSV</span>
-            </button>
-          )}
 
           {/* New Audit CTA Button */}
           <Link
             href="/"
-            className={`inline-flex items-center gap-1.5 h-8.5 px-3.5 rounded-lg text-xs font-semibold shadow-xs transition shrink-0 ${
-              pathname === '/'
-                ? 'bg-slate-900 text-white ring-2 ring-emerald-500/20'
+            className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-bold shadow-xs transition shrink-0 ${pathname === '/'
+                ? 'bg-slate-900 text-white ring-2 ring-emerald-500/30'
                 : 'bg-slate-900 hover:bg-slate-800 text-white'
-            }`}
+              }`}
           >
             <Plus className="w-3.5 h-3.5 text-emerald-400" />
             <span>New Audit</span>

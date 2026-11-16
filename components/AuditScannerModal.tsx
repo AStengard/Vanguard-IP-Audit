@@ -26,35 +26,35 @@ const SCANNER_CHECKS: ScannerCheck[] = [
     label: "Connecting to EPO OPS v3.2 REST API",
     subtext: "OAuth2 Client Credentials authenticated • developers.epo.org (200 OK)",
     type: "success",
-    revealAtMs: 500,
+    revealAtMs: 1000,
   },
   {
     id: "check-2",
     label: "Verifying Chain of Title under Art. 72 EPC",
     subtext: "Cross-referencing recorded proprietors against Target corporate entities",
     type: "success",
-    revealAtMs: 1200,
+    revealAtMs: 2400,
   },
   {
     id: "check-3",
     label: "Checking Maintenance Fees under Art. 86 EPC (Lapse found)",
     subtext: "Rule 51(2) EPC 6-month surcharge grace period active for EP3800201",
     type: "warning",
-    revealAtMs: 1900,
+    revealAtMs: 3800,
   },
   {
     id: "check-4",
     label: "Inspecting Opposition Register under Art. 99 EPC (Dispute found)",
     subtext: "Article 99(1) EPC formal revocation challenge pending by Siemens Healthcare",
     type: "warning",
-    revealAtMs: 2600,
+    revealAtMs: 5200,
   },
   {
     id: "check-5",
     label: "Generating Statutory M&A Risk Matrix",
     subtext: "Formulating Closing Conditions Precedent (CP) and Specific Indemnity clauses",
     type: "success",
-    revealAtMs: 3300,
+    revealAtMs: 6600,
   },
 ];
 
@@ -96,7 +96,7 @@ export default function AuditScannerModal() {
 
   if (!isVisible) return null;
 
-  const totalDuration = 4.0;
+  const totalDuration = 8.0;
   const progressPct = Math.min(100, Math.round((elapsedTime / totalDuration) * 100));
 
   return (

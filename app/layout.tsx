@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import DemoPlayerBar from "@/components/DemoPlayerBar";
 import AuditScannerModal from "@/components/AuditScannerModal";
 import DemoCompletionModal from "@/components/DemoCompletionModal";
+import DemoNarratorBox from "@/components/DemoNarratorBox";
 
 export const metadata: Metadata = {
   title: "Vanguard IP Audit — M&A Patent Due Diligence Suite",
@@ -32,6 +33,7 @@ export default function RootLayout({
               {children}
             </div>
             <DemoPlayerBar />
+            <DemoNarratorBox />
             <AuditScannerModal />
             <DemoCompletionModal />
             <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 print:hidden">

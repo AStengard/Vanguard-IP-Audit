@@ -34,7 +34,8 @@ export default function HistoryPage() {
     renameSavedAudit,
     deleteSavedAudit,
     clearAllSavedAudits,
-    resetToShowcase
+    resetToShowcase,
+    downloadCsv
   } = useDeal();
 
   // State for inline renaming
@@ -124,6 +125,17 @@ export default function HistoryPage() {
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
+          {targetCompany && (
+            <button
+              onClick={downloadCsv}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs shadow-2xs transition cursor-pointer"
+              title="Download Schedule 3.14 spreadsheet for currently active deal"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Export CSV</span>
+            </button>
+          )}
+
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition"

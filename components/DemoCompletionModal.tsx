@@ -7,6 +7,7 @@ import {
   ShieldAlert,
   AlertTriangle,
   FileText,
+  FileSpreadsheet,
   RotateCcw,
   Compass,
   ExternalLink,
@@ -21,7 +22,7 @@ import { useDeal } from "./DealContext";
 
 export default function DemoCompletionModal() {
   const { isDemoActive, isCompleted, exitDemo, startDemo } = useRecruiterDemo();
-  const { targetCompany } = useDeal();
+  const { targetCompany, downloadCsv } = useDeal();
 
   // Only render when the demo is active and marked as completed
   if (!isDemoActive || !isCompleted) return null;
@@ -157,6 +158,17 @@ export default function DemoCompletionModal() {
             >
               <Compass className="w-4 h-4 text-slate-950 group-hover:rotate-45 transition-transform" />
               <span>Explore the App Freely</span>
+            </button>
+
+            {/* Export CSV action right on results completion */}
+            <button
+              type="button"
+              onClick={downloadCsv}
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs sm:text-sm border border-slate-300 shadow-sm transition cursor-pointer"
+              title="Download Schedule 3.14 spreadsheet (CSV)"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+              <span>Export CSV</span>
             </button>
 
             {/* Secondary Action: Restart Demo */}

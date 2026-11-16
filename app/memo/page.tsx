@@ -43,7 +43,7 @@ export default function MemoPage() {
       if (remediesEl) {
         remediesEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 600 / playbackSpeed);
+    }, 1500 / playbackSpeed);
 
     return () => clearTimeout(scrollTimer);
   }, [isDemoActive, currentStepIndex, playbackSpeed]);

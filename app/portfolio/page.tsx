@@ -38,7 +38,7 @@ export default function PortfolioPage() {
       if (tableEl) {
         tableEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    }, 500 / playbackSpeed);
+    }, 1200 / playbackSpeed);
 
     return () => clearTimeout(scrollTimer);
   }, [isDemoActive, currentStepIndex, playbackSpeed]);
