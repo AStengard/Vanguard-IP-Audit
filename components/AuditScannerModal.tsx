@@ -104,7 +104,7 @@ export default function AuditScannerModal() {
       {/* Modal Container */}
       <div className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-8 text-white shadow-2xl space-y-6">
         {/* Animated Scanning Laser Line */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-emerald-400 to-transparent animate-pulse" />
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-pulse" />
 
         {/* Modal Header */}
         <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
@@ -144,7 +144,7 @@ export default function AuditScannerModal() {
         <div className="space-y-1.5">
           <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/60">
             <div
-              className="h-full bg-linear-to-r from-emerald-500 via-teal-400 to-emerald-300 rounded-full transition-all duration-150"
+              className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 rounded-full transition-all duration-150"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -211,11 +211,7 @@ export default function AuditScannerModal() {
                           : "text-slate-500"
                       }`}
                     >
-                      {check.type === "warning" && isDone
-                        ? `[⚠] ${check.label}`
-                        : isDone
-                        ? `[✓] ${check.label}`
-                        : check.label}
+                      {check.label}
                     </span>
 
                     {isDone && (

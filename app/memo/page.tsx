@@ -42,9 +42,11 @@ export default function MemoPage() {
     const scrollTimer = setTimeout(() => {
       const remediesEl = document.getElementById('demo-spa-remedies-section');
       if (remediesEl) {
-        remediesEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const yOffset = -90;
+        const y = remediesEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
-    }, 1500 / playbackSpeed);
+    }, 1000 / playbackSpeed);
 
     return () => clearTimeout(scrollTimer);
   }, [isDemoActive, currentStepIndex, playbackSpeed]);
@@ -192,28 +194,10 @@ export default function MemoPage() {
           </div>
         </div>
 
-        {/* Recruiter Auto-Demo Step 5 Showcase Banner */}
-        {isDemoActive && currentStepIndex === 4 && (
-          <div className="bg-slate-900 border border-emerald-500/40 rounded-2xl p-4 text-white shadow-xl space-y-1.5 animate-pulse print:hidden font-sans">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
-                <Sparkles className="w-4 h-4" />
-                <span>⚡ Step 5 Showcase: Auto-Generated Legal Memorandum &amp; SPA Covenants</span>
-              </div>
-              <span className="text-[10px] font-mono text-emerald-300 font-bold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/30">
-                Closing CPs &amp; Indemnity
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-300 font-serif leading-relaxed">
-              Automated M&amp;A remediation provisions ready for inclusion in the draft Share Purchase Agreement (SPA Section 4.14 / Schedule 3.14).
-            </p>
-          </div>
-        )}
-
         {/* Section 2: Priority Findings & Contractual Remedies with DemoSpotlight */}
         <DemoSpotlight
           stepIndex={4}
-          badgeText="⚡ SPA Closing Covenants & Specific Indemnity"
+          badgeText="SPA Closing Covenants & Specific Indemnity"
           badgeSubtext="Mandatory Condition Precedent § 7.02(f)"
           variant="emerald"
           badgePosition="top-left"

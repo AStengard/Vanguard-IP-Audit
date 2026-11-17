@@ -82,7 +82,7 @@ export default function DemoNarratorBox() {
     >
       <div className="relative bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden">
         {/* Subtle glowing top accent line */}
-        <div className="h-0.5 bg-linear-to-r from-emerald-500 via-teal-400 to-amber-400" />
+        <div className="h-0.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400" />
 
         {/* Header Row */}
         <div className="p-3 sm:px-4 sm:py-3 border-b border-slate-800 flex items-center justify-between gap-2">
@@ -140,9 +140,8 @@ export default function DemoNarratorBox() {
                   {narration.tag}
                 </span>
               </div>
-              <h3 className="text-xs sm:text-sm font-black tracking-tight text-white flex items-center gap-1.5">
-                <Icon className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{narration.title}</span>
+              <h3 className="text-xs sm:text-sm font-black tracking-tight text-white">
+                {narration.title}
               </h3>
             </div>
 
@@ -153,9 +152,8 @@ export default function DemoNarratorBox() {
 
             {/* Why this matters / Deal Impact Box */}
             <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1">
-                <Info className="w-3 h-3 shrink-0" />
-                <span>Deal &amp; Audit Impact:</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                Deal &amp; Audit Impact:
               </span>
               <p className="text-[11px] text-slate-300 leading-normal font-serif">
                 {narration.dealImpact}

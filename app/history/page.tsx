@@ -231,7 +231,7 @@ export default function HistoryPage() {
                   key={audit.id}
                   className={`bg-white border rounded-2xl p-5 sm:p-6 shadow-xs transition space-y-4 ${
                     isActive
-                      ? 'border-emerald-300 ring-1 ring-emerald-500/20 bg-linear-to-r from-emerald-50/20 to-white'
+                      ? 'border-emerald-300 ring-1 ring-emerald-500/20 bg-gradient-to-r from-emerald-50/20 to-white'
                       : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >

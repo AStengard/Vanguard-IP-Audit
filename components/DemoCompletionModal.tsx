@@ -47,9 +47,8 @@ export default function DemoCompletionModal() {
         {/* Header with Celebration Badge & Title */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-black uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Tour Completed</span>
+            <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-black uppercase tracking-wider">
+              Tour Completed
             </span>
             <span className="text-xs text-slate-400 font-mono">
               Target: {targetCompany || "Aetheris MedTech GmbH"}
@@ -57,7 +56,7 @@ export default function DemoCompletionModal() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-emerald-400 to-teal-500 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20 font-black">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20 font-black">
               <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
             </div>
             <div>

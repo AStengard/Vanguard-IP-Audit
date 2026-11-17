@@ -43,9 +43,12 @@ export default function OverviewPage() {
     const scrollTimer = setTimeout(() => {
       const el = document.getElementById('demo-critical-flags-section');
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Offset scroll by 90px so the heading and bouncing sign are clearly visible below sticky navbar
+        const yOffset = -90;
+        const y = el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
-    }, 800 / playbackSpeed);
+    }, 600 / playbackSpeed);
 
     return () => clearTimeout(scrollTimer);
   }, [isDemoActive, currentStepIndex, playbackSpeed]);
@@ -187,7 +190,7 @@ export default function OverviewPage() {
         {/* Critical Red Flags */}
         <Link
           href="/portfolio"
-          className="bg-white border border-rose-200 bg-linear-to-b from-rose-50/40 to-white hover:border-rose-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
+          className="bg-white border border-rose-200 bg-gradient-to-b from-rose-50/40 to-white hover:border-rose-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-rose-700 uppercase tracking-wider flex items-center gap-1">
@@ -207,7 +210,7 @@ export default function OverviewPage() {
         {/* Material Warnings */}
         <Link
           href="/portfolio"
-          className="bg-white border border-amber-200 bg-linear-to-b from-amber-50/40 to-white hover:border-amber-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
+          className="bg-white border border-amber-200 bg-gradient-to-b from-amber-50/40 to-white hover:border-amber-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1">
@@ -227,7 +230,7 @@ export default function OverviewPage() {
         {/* Good Standing */}
         <Link
           href="/portfolio"
-          className="bg-white border border-emerald-200 bg-linear-to-b from-emerald-50/40 to-white hover:border-emerald-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
+          className="bg-white border border-emerald-200 bg-gradient-to-b from-emerald-50/40 to-white hover:border-emerald-300 rounded-2xl p-5 shadow-xs transition group cursor-pointer"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
@@ -256,12 +259,6 @@ export default function OverviewPage() {
                 <ShieldAlert className="w-5 h-5 text-rose-600" />
                 <span>Priority Red Flags Requiring M&amp;A Remediation</span>
               </h2>
-              {isDemoActive && currentStepIndex === 2 && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black uppercase tracking-wider animate-bounce shadow-md">
-                  <Sparkles className="w-3 h-3 text-amber-300" />
-                  <span>Spotlight Active</span>
-                </span>
-              )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               These items cannot be closed on standard representations and require specific contractual safeguards.
@@ -293,7 +290,7 @@ export default function OverviewPage() {
                 <div
                   className={`bg-white rounded-2xl p-5 shadow-xs flex flex-col justify-between transition-all duration-500 h-full ${
                     isFirst && isDemoActive && currentStepIndex === 2
-                      ? 'border border-rose-300 bg-linear-to-b from-rose-50/30 to-white'
+                      ? 'border border-rose-300 bg-gradient-to-b from-rose-50/30 to-white'
                       : 'border border-rose-200 hover:border-rose-300'
                   }`}
                 >
@@ -352,7 +349,7 @@ export default function OverviewPage() {
                   <DemoSpotlight
                     key={asset.id}
                     stepIndex={2}
-                    badgeText="⚡ Art. 72 EPC Title Break"
+                    badgeText="Art. 72 EPC Title Break"
                     badgeSubtext="Unrecorded university transfer requires Closing CP"
                     variant="rose"
                     badgePosition="top-left"

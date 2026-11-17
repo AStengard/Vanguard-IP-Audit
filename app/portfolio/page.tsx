@@ -34,11 +34,14 @@ export default function PortfolioPage() {
     if (!isDemoActive || currentStepIndex !== 3) return;
 
     const scrollTimer = setTimeout(() => {
-      const tableEl = document.getElementById('portfolio-schedule-table');
-      if (tableEl) {
-        tableEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const tableWrapper = document.getElementById('demo-portfolio-spotlight-wrapper') || document.getElementById('portfolio-schedule-table');
+      if (tableWrapper) {
+        // Offset scroll by 90px so the bouncing spotlight sign and table header are clearly visible below sticky navbar
+        const yOffset = -90;
+        const y = tableWrapper.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
-    }, 1200 / playbackSpeed);
+    }, 600 / playbackSpeed);
 
     return () => clearTimeout(scrollTimer);
   }, [isDemoActive, currentStepIndex, playbackSpeed]);
@@ -208,41 +211,20 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      {/* Recruiter Auto-Demo Step 4 Spotlight Banner */}
-      {isDemoActive && currentStepIndex === 3 && (
-        <div className="bg-emerald-500/10 border-2 border-emerald-500/40 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-800 shadow-lg animate-pulse">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-black shrink-0">
-              ⚡
-            </div>
-            <div>
-              <strong className="text-slate-900 font-bold block">
-                Step 4 Showcase: Schedule 3.14 Due Diligence Breakdown Table
-              </strong>
-              <span className="text-slate-600 font-serif text-[11px]">
-                Reviewing 12 European patent records cross-audited across Art. 72, 86, 99 EPC &amp; Unitary Patent status.
-              </span>
-            </div>
-          </div>
-          <span className="text-[10px] font-mono font-bold uppercase px-2 py-1 rounded bg-emerald-500 text-slate-950 shrink-0">
-            Auto-Scrolled
-          </span>
-        </div>
-      )}
-
       {/* =====================================================================
           3. FULL PORTFOLIO TABLE WITH DEMOSPOTLIGHT
       ====================================================================== */}
       <DemoSpotlight
+        id="demo-portfolio-spotlight-wrapper"
         stepIndex={3}
-        badgeText="⚡ Schedule 3.14 Due Diligence Breakdown Table"
+        badgeText="Schedule 3.14 Due Diligence Breakdown Table"
         badgeSubtext="Unitary status & Rule 51(2) EPC grace periods"
         variant="emerald"
         badgePosition="top-left"
       >
         <div
           id="portfolio-schedule-table"
-          className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden"
+          className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden scroll-mt-24"
         >
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">

@@ -63,9 +63,8 @@ export default function DemoPlayerBar() {
               <span className="text-[11px] sm:text-sm font-black tracking-tight text-white truncate max-w-[160px] xs:max-w-[220px] sm:max-w-none">
                 {isCompleted ? "Demo Complete — All Steps Finished" : currentStep.label}
               </span>
-              <span className="hidden md:inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <Sparkles className="w-2.5 h-2.5" />
-                <span>Auto-Tour</span>
+              <span className="hidden md:inline-flex items-center text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                Auto-Tour
               </span>
             </div>
             <span className="text-[10px] sm:text-[11px] text-slate-400 truncate max-w-[150px] xs:max-w-[200px] sm:max-w-md font-serif">
@@ -156,13 +155,13 @@ export default function DemoPlayerBar() {
                 key={step.id}
                 type="button"
                 onClick={() => jumpToStep(idx)}
-                className="flex-1 h-1.5 bg-slate-800 hover:bg-slate-700 rounded-full overflow-hidden transition-all duration-150 cursor-pointer relative group/step focus:outline-hidden"
+                className="flex-1 h-1.5 bg-slate-800 hover:bg-slate-700 rounded-full overflow-hidden transition-all duration-150 cursor-pointer relative group/step focus:outline-none"
                 title={`${step.label}: ${step.title} (Click to jump)`}
               >
                 <div
                   className={`h-full rounded-full transition-all duration-100 ${
                     isCurrent
-                      ? "bg-linear-to-r from-emerald-500 to-teal-300"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-300"
                       : "bg-emerald-500/80"
                   }`}
                   style={{ width }}

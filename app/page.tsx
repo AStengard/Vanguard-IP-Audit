@@ -57,7 +57,9 @@ export default function LandingPortalPage() {
     const scrollTimer = setTimeout(() => {
       const formEl = document.getElementById('custom-audit-form-section');
       if (formEl) {
-        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const yOffset = -90;
+        const y = formEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+        window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
       }
     }, 250 / playbackSpeed);
 
@@ -326,18 +328,15 @@ export default function LandingPortalPage() {
           Automated statutory legal risk audit for technology and life sciences transactions. Evaluates Chain of Title (Art. 72), Maintenance Standing (Art. 86), Opposition Vulnerability (Art. 99), and Unitary Patent Scope.
         </p>
 
-        {/* ⚡ Recruiter Auto-Demo Launcher CTA */}
+        {/* Recruiter Auto-Demo Launcher CTA */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             type="button"
             onClick={startDemo}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-linear-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-700 text-white font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl border border-slate-700 hover:border-amber-400/50 transition-all duration-200 cursor-pointer group hover:-translate-y-0.5"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-700 text-white font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl border border-slate-700 hover:border-emerald-500/50 transition-all duration-200 cursor-pointer group hover:-translate-y-0.5"
             title="Start automated 5-step recruiter walkthrough"
           >
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs shadow-xs group-hover:scale-110 transition-transform">
-              ⚡
-            </span>
-            <span>⚡ Watch Recruiter Demo</span>
+            <span>Watch Recruiter Demo</span>
             <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
               Auto Tour
             </span>
@@ -380,7 +379,7 @@ export default function LandingPortalPage() {
                 </label>
                 {isDemoActive && currentStepIndex === 0 && (
                   <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 animate-pulse">
-                    ⚡ Auto-Typing Target...
+                    Auto-Typing Target...
                   </span>
                 )}
               </div>
@@ -409,7 +408,7 @@ export default function LandingPortalPage() {
                 </label>
                 {isDemoActive && currentStepIndex === 0 ? (
                   <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 animate-pulse">
-                    ⚡ Auto-Filling Schedule...
+                    Auto-Filling Schedule...
                   </span>
                 ) : (
                   <button
@@ -442,7 +441,7 @@ export default function LandingPortalPage() {
             {/* Audit Engine Mode Selector with DemoSpotlight */}
             <DemoSpotlight
               stepIndex={0}
-              badgeText="⚡ Automated Fuzzy-Matching against EPO Register"
+              badgeText="Automated Fuzzy-Matching against EPO Register"
               variant="emerald"
               badgePosition="top-right"
               className="pt-2 border-t border-slate-100"
@@ -564,7 +563,7 @@ export default function LandingPortalPage() {
         {/* -------------------------------------------------------------------
             CHOICE 2: THE PRE-CONFIGURED SHOWCASE TEMPLATE (Instant Preview)
         -------------------------------------------------------------------- */}
-        <div className="lg:col-span-5 bg-linear-to-b from-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-md space-y-6 flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-slate-900 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-md space-y-6 flex flex-col justify-between border border-slate-800">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">

@@ -99,7 +99,7 @@ export default function Navbar() {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
             </span>
             <span className="hidden sm:inline font-extrabold tracking-tight">Watch Recruiter Demo</span>
-            <span className="sm:hidden font-extrabold">⚡ Demo</span>
+            <span className="sm:hidden font-extrabold">Demo</span>
           </button>
 
           {/* New Audit CTA Button */}
