@@ -155,32 +155,6 @@ export default function LandingPortalPage() {
     setCustomTarget('Aetheris MedTech GmbH');
   };
 
-  // Launch the Pre-made Showcase Template (with full 8-second real-time scanner animation)
-  const handleLaunchShowcase = async () => {
-    if (liveScan?.isOpen) return;
-
-    setLiveScan({
-      isOpen: true,
-      targetName: 'Aetheris MedTech GmbH',
-      patentCount: 12,
-      isApiReady: true,
-      liveFlags: {
-        chainOfTitleFlagged: true,
-        maintenanceFlagged: true,
-        oppositionFlagged: true
-      },
-      modeBadge: 'Showcase',
-      footerTag: 'Project Aetheris • Showcase Scan'
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, SCANNER_MIN_DURATION_MS));
-    if (!isMountedRef.current) return;
-
-    resetToShowcase();
-    setLiveScan(null);
-    router.push('/overview');
-  };
-
   // Run the Custom Audit
   const handleRunCustomAudit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -412,33 +386,46 @@ export default function LandingPortalPage() {
         <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-serif">
           Automated statutory legal risk audit for technology and life sciences transactions. Evaluates Chain of Title (Art. 72), Maintenance Standing (Art. 86), Opposition Vulnerability (Art. 99), and Unitary Patent Scope.
         </p>
-
-        {/* Recruiter Auto-Demo Launcher CTA */}
-        <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button
-            type="button"
-            onClick={startDemo}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-700 text-white font-extrabold text-xs sm:text-sm shadow-lg hover:shadow-xl border border-slate-700 hover:border-emerald-500/50 transition-all duration-200 cursor-pointer group hover:-translate-y-0.5"
-            title="Start automated 5-step recruiter walkthrough"
-          >
-            <span>Watch Recruiter Demo</span>
-            <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-              Auto Tour
-            </span>
-          </button>
-        </div>
       </div>
 
       {/* =====================================================================
-          3. THE TWO PRIMARY CHOICES (STANDARD FUNCTIONAL APP vs PRESET TEMPLATE)
+          3. COMPACT MERGED RECRUITER DEMO BANNER (Project Aetheris — 12 EP Assets)
       ====================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* -------------------------------------------------------------------
-            CHOICE 1: THE STANDARD FUNCTIONAL APPLICATION (User inputs info)
-        -------------------------------------------------------------------- */}
+      <div className="max-w-3xl mx-auto bg-slate-900 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-800 text-white rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              Guided Demo
+            </span>
+            <span className="text-[11px] text-slate-400 font-mono">
+              Project Aetheris • 12 EP Assets
+            </span>
+          </div>
+          <h2 className="text-sm sm:text-base font-extrabold text-white tracking-tight">
+            Watch Recruiter Demo — Pre-Configured MedTech M&amp;A Deal
+          </h2>
+          <p className="text-[11px] text-slate-300 font-serif leading-relaxed">
+            Walk through 4 critical red flags (Art. 72 title breaks, Art. 86 lapse, Art. 99 opposition), Schedule 3.14 &amp; SPA memo — no API keys needed.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={startDemo}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-sm transition cursor-pointer shrink-0"
+          title="Start 5-step guided recruiter walkthrough using the Project Aetheris 12-patent deal"
+        >
+          <span>Watch Recruiter Demo</span>
+        </button>
+      </div>
+
+      {/* =====================================================================
+          4. LIVE EPO TRANSACTION AUDIT FORM
+      ====================================================================== */}
+      <div className="max-w-3xl mx-auto">
         <div
           id="custom-audit-form-section"
-          className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-24"
+          className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-24"
         >
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -595,103 +582,20 @@ export default function LandingPortalPage() {
                   <ol className="list-decimal pl-4 space-y-1">
                     <li>Register for free at <strong>developers.epo.org</strong>.</li>
                     <li>Add <code>EPO_OPS_CONSUMER_KEY</code> and <code>EPO_OPS_SECRET</code> in your Vercel environment variables.</li>
-                    <li>Or explore the <strong>Project Aetheris — MedTech Deal</strong> instant showcase (no API keys needed).</li>
+                    <li>Or launch the <strong>Recruiter Demo</strong> to explore the full 12-patent Project Aetheris deal immediately without API keys.</li>
                   </ol>
                   <button
                     type="button"
-                    onClick={handleLaunchShowcase}
+                    onClick={startDemo}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] transition cursor-pointer"
                   >
-                    <span>Launch Project Aetheris Showcase</span>
+                    <span>Watch Recruiter Demo</span>
                     <ArrowRight className="w-3.5 h-3.5 text-emerald-400" />
                   </button>
                 </div>
               )}
             </div>
           )}
-        </div>
-
-        {/* -------------------------------------------------------------------
-            CHOICE 2: THE PRE-CONFIGURED SHOWCASE TEMPLATE (Instant Preview)
-        -------------------------------------------------------------------- */}
-        <div className="lg:col-span-5 bg-slate-900 bg-gradient-to-b from-slate-900 to-slate-950 text-white rounded-3xl p-6 sm:p-8 shadow-md space-y-6 flex flex-col justify-between border border-slate-800">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Instant Showcase Template
-              </span>
-              <span className="text-xs text-slate-400 font-mono">12 EP Assets</span>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-extrabold text-white">
-                Project Aetheris — MedTech Deal
-              </h2>
-              <div className="text-xs text-emerald-400 font-semibold mt-1">
-                Target: Aetheris MedTech GmbH (Munich)
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-300 leading-relaxed font-serif">
-              Don&apos;t have patent numbers ready? Explore a complete pre-configured European acquisition portfolio displaying the full suite of statutory EPC risks:
-            </p>
-
-            {/* Showcase Highlights List */}
-            <div className="space-y-2.5 text-xs pt-1">
-              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
-                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-white">Unrecorded University Transfer (Art. 72 EPC):</strong>
-                  <span className="text-slate-300 block text-[11px] mt-0.5">
-                    Core patent registered to Universität Heidelberg instead of target company.
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
-                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-white">Missed Annuity in Grace Period (Art. 86 EPC):</strong>
-                  <span className="text-slate-300 block text-[11px] mt-0.5">
-                    Missed renewal sitting in 6-month surcharge window (Rule 51(2) EPC).
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
-                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-white">Competitor Opposition (Art. 99 EPC):</strong>
-                  <span className="text-slate-300 block text-[11px] mt-0.5">
-                    Formal revocation challenge filed by Siemens Healthcare GmbH.
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <strong className="text-white">Unitary Patent (UP / UPC Scope):</strong>
-                  <span className="text-slate-300 block text-[11px] mt-0.5">
-                    Uniform single-title protection across 17 EU member states.
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-slate-800 space-y-2">
-            <button
-              onClick={handleLaunchShowcase}
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-xs transition cursor-pointer"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Launch Pre-Configured Showcase Deal</span>
-            </button>
-            <span className="text-[11px] text-slate-400 text-center block">
-              Instantly opens the full dashboard, memorandum, dossiers &amp; CSV export.
-            </span>
-          </div>
         </div>
       </div>
 
