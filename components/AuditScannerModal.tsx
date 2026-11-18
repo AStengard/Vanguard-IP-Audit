@@ -1,22 +1,43 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import {
   CheckCircle2,
   AlertTriangle,
   Loader2,
-  Database,
-  ShieldAlert,
-  Sparkles,
-  Server,
 } from "lucide-react";
 import { useRecruiterDemo } from "./RecruiterDemoContext";
+
+export const SCANNER_MIN_DURATION_MS = 8000;
+
+export interface LiveScanFlags {
+  chainOfTitleFlagged: boolean;
+  maintenanceFlagged: boolean;
+  oppositionFlagged: boolean;
+}
+
+export interface AuditScannerModalProps {
+  /** Controlled mode: when defined, overrides demo-only visibility */
+  isOpen?: boolean;
+  /** Target company name displayed in the scanner header */
+  targetName?: string;
+  /** Number of patents being scanned */
+  patentCount?: number;
+  /** Whether the underlying data request has resolved and results are ready */
+  isApiReady?: boolean;
+  /** Actual pillar findings from live EPO or showcase evaluation */
+  liveFlags?: LiveScanFlags | null;
+  /** Optional short label under percentage (e.g. "Live API" or "Showcase") */
+  modeBadge?: string;
+  /** Optional footer right-hand tag */
+  footerTag?: string;
+}
 
 interface ScannerCheck {
   id: string;
   label: string;
-  subtext: string;
-  type: "success" | "warning";
+  defaultType: "success" | "warning";
+  requiresApiData?: boolean;
   revealAtMs: number;
 }
 
@@ -24,52 +45,60 @@ const SCANNER_CHECKS: ScannerCheck[] = [
   {
     id: "check-1",
     label: "Connecting to EPO OPS v3.2 REST API",
-    subtext: "OAuth2 Client Credentials authenticated • developers.epo.org (200 OK)",
-    type: "success",
+    defaultType: "success",
     revealAtMs: 1000,
   },
   {
     id: "check-2",
     label: "Verifying Chain of Title under Art. 72 EPC",
-    subtext: "Cross-referencing recorded proprietors against Target corporate entities",
-    type: "success",
+    defaultType: "warning",
+    requiresApiData: true,
     revealAtMs: 2400,
   },
   {
     id: "check-3",
-    label: "Checking Maintenance Fees under Art. 86 EPC (Lapse found)",
-    subtext: "Rule 51(2) EPC 6-month surcharge grace period active for EP3800201",
-    type: "warning",
+    label: "Checking Maintenance Fees under Art. 86 EPC",
+    defaultType: "warning",
+    requiresApiData: true,
     revealAtMs: 3800,
   },
   {
     id: "check-4",
-    label: "Inspecting Opposition Register under Art. 99 EPC (Dispute found)",
-    subtext: "Article 99(1) EPC formal revocation challenge pending by Siemens Healthcare",
-    type: "warning",
+    label: "Inspecting Opposition Register under Art. 99 EPC",
+    defaultType: "warning",
+    requiresApiData: true,
     revealAtMs: 5200,
   },
   {
     id: "check-5",
     label: "Generating Statutory M&A Risk Matrix",
-    subtext: "Formulating Closing Conditions Precedent (CP) and Specific Indemnity clauses",
-    type: "success",
+    defaultType: "success",
+    requiresApiData: true,
     revealAtMs: 6600,
   },
 ];
 
-export default function AuditScannerModal() {
+export default function AuditScannerModal({
+  isOpen,
+  targetName,
+  patentCount,
+  isApiReady = true,
+  liveFlags = null,
+  modeBadge,
+  footerTag,
+}: AuditScannerModalProps = {}) {
   const { isDemoActive, currentStepIndex, playbackSpeed, elapsedTime } =
     useRecruiterDemo();
 
   const [activeChecks, setActiveChecks] = useState<Record<string, "pending" | "running" | "done">>({});
   const [localElapsedSec, setLocalElapsedSec] = useState<number>(0);
 
-  // Only render when demo is active and at Step 2 (Scanner step)
-  const isVisible = isDemoActive && currentStepIndex === 1;
-  const totalDuration = 8.0;
+  const isLiveMode = isOpen !== undefined;
+  const isVisible = isLiveMode ? Boolean(isOpen) : isDemoActive && currentStepIndex === 1;
+  const totalDuration = SCANNER_MIN_DURATION_MS / 1000;
+  const effectiveSpeed = isLiveMode ? 1 : playbackSpeed;
 
-  // Run a local visual scan progression so Step 2 still animates smoothly even when auto-advance is paused
+  // Run a local visual scan progression so Step 2 animates when paused and live audits run at least 8s
   useEffect(() => {
     if (!isVisible) {
       setLocalElapsedSec(0);
@@ -77,21 +106,30 @@ export default function AuditScannerModal() {
     }
 
     const tickMs = 100;
-    const deltaSec = (tickMs / 1000) * playbackSpeed;
+    const deltaSec = (tickMs / 1000) * effectiveSpeed;
     const interval = setInterval(() => {
       setLocalElapsedSec((prev) => {
-        if (prev >= totalDuration) {
-          clearInterval(interval);
-          return totalDuration;
+        const cap = isLiveMode && !isApiReady ? totalDuration * 0.92 : totalDuration;
+        if (prev >= cap) {
+          return prev;
         }
-        return Math.min(totalDuration, prev + deltaSec);
+        return Math.min(cap, prev + deltaSec);
       });
     }, tickMs);
 
     return () => clearInterval(interval);
-  }, [isVisible, playbackSpeed]);
+  }, [isVisible, effectiveSpeed, isLiveMode, isApiReady, totalDuration]);
 
-  const effectiveElapsedSec = Math.max(elapsedTime, localElapsedSec);
+  // If live API finishes after the timer hit the 92% cap, jump smoothly to 100%
+  useEffect(() => {
+    if (isLiveMode && isVisible && isApiReady && localElapsedSec >= totalDuration * 0.9) {
+      setLocalElapsedSec(totalDuration);
+    }
+  }, [isLiveMode, isVisible, isApiReady, localElapsedSec, totalDuration]);
+
+  const effectiveElapsedSec = isLiveMode
+    ? localElapsedSec
+    : Math.max(elapsedTime, localElapsedSec);
 
   // Track progress and update check statuses dynamically
   useEffect(() => {
@@ -101,14 +139,14 @@ export default function AuditScannerModal() {
     }
 
     const effectiveElapsedMs = effectiveElapsedSec * 1000;
-
     const newStatuses: Record<string, "pending" | "running" | "done"> = {};
 
     SCANNER_CHECKS.forEach((check, index) => {
       const threshold = check.revealAtMs;
       const priorThreshold = index > 0 ? SCANNER_CHECKS[index - 1].revealAtMs : 0;
+      const canFinish = !isLiveMode || !check.requiresApiData || isApiReady;
 
-      if (effectiveElapsedMs >= threshold) {
+      if (effectiveElapsedMs >= threshold && canFinish) {
         newStatuses[check.id] = "done";
       } else if (effectiveElapsedMs >= priorThreshold) {
         newStatuses[check.id] = "running";
@@ -118,14 +156,28 @@ export default function AuditScannerModal() {
     });
 
     setActiveChecks(newStatuses);
-  }, [isVisible, effectiveElapsedSec]);
+  }, [isVisible, effectiveElapsedSec, isLiveMode, isApiReady]);
 
   if (!isVisible) return null;
 
   const progressPct = Math.min(100, Math.round((effectiveElapsedSec / totalDuration) * 100));
+  const displayTarget = targetName || "Aetheris MedTech GmbH";
+  const displayCount = patentCount ?? 12;
+
+  const resolveCheckType = (check: ScannerCheck): "success" | "warning" => {
+    if (!isLiveMode || !liveFlags) return check.defaultType;
+    if (check.id === "check-2") return liveFlags.chainOfTitleFlagged ? "warning" : "success";
+    if (check.id === "check-3") return liveFlags.maintenanceFlagged ? "warning" : "success";
+    if (check.id === "check-4") return liveFlags.oppositionFlagged ? "warning" : "success";
+    return check.defaultType;
+  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 pb-28 sm:pb-32 animate-in fade-in duration-200">
+    <div
+      className={`fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 ${
+        isLiveMode ? "" : "pb-28 sm:pb-32"
+      } animate-in fade-in duration-200`}
+    >
       {/* Modal Container */}
       <div className="relative w-full max-w-xl max-h-[82vh] overflow-y-auto bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-8 text-white shadow-2xl space-y-6">
         {/* Animated Scanning Laser Line */}
@@ -144,14 +196,15 @@ export default function AuditScannerModal() {
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              Statutory Due Diligence Engine
+              Live EPO Statutory Audit Scanner
             </h2>
             <div className="text-xs text-slate-400 flex items-center gap-1.5 font-medium">
-              <Server className="w-3.5 h-3.5 text-slate-500" />
               <span>Target:</span>
-              <strong className="text-slate-200">Aetheris MedTech GmbH</strong>
+              <strong className="text-slate-200">{displayTarget}</strong>
               <span className="text-slate-600">•</span>
-              <span className="text-slate-400">5 Disclosed Patents</span>
+              <span className="text-slate-400">
+                {displayCount} Disclosed {displayCount === 1 ? "Patent" : "Patents"}
+              </span>
             </div>
           </div>
 
@@ -160,7 +213,7 @@ export default function AuditScannerModal() {
               {progressPct}%
             </div>
             <span className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">
-              {playbackSpeed}x Speed
+              {isLiveMode ? modeBadge || "Live API" : `${playbackSpeed}x Speed`}
             </span>
           </div>
         </div>
@@ -185,13 +238,14 @@ export default function AuditScannerModal() {
             const status = activeChecks[check.id] || "pending";
             const isDone = status === "done";
             const isRunning = status === "running";
+            const checkType = resolveCheckType(check);
 
             return (
               <div
                 key={check.id}
-                className={`p-3 rounded-xl border transition-all duration-200 flex items-start gap-3 ${
+                className={`p-3.5 rounded-xl border transition-all duration-200 flex items-center gap-3 ${
                   isDone
-                    ? check.type === "warning"
+                    ? checkType === "warning"
                       ? "bg-amber-950/20 border-amber-500/30 text-amber-200"
                       : "bg-emerald-950/20 border-emerald-500/30 text-emerald-200"
                     : isRunning
@@ -200,9 +254,9 @@ export default function AuditScannerModal() {
                 }`}
               >
                 {/* Status Indicator Icon */}
-                <div className="mt-0.5 shrink-0">
+                <div className="shrink-0">
                   {isDone ? (
-                    check.type === "warning" ? (
+                    checkType === "warning" ? (
                       <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
                         <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
                       </div>
@@ -223,46 +277,32 @@ export default function AuditScannerModal() {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <span
-                      className={`text-xs font-bold tracking-tight ${
-                        isDone
-                          ? check.type === "warning"
-                            ? "text-amber-300"
-                            : "text-emerald-300"
-                          : isRunning
-                          ? "text-white"
-                          : "text-slate-500"
-                      }`}
-                    >
-                      {check.label}
-                    </span>
-
-                    {isDone && (
-                      <span
-                        className={`text-[10px] font-mono uppercase px-1.5 py-0.2 rounded font-bold shrink-0 ${
-                          check.type === "warning"
-                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                            : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                        }`}
-                      >
-                        {check.type === "warning" ? "Flagged" : "Verified"}
-                      </span>
-                    )}
-                  </div>
-
-                  <p
-                    className={`text-[11px] mt-0.5 line-clamp-1 font-serif ${
+                <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
+                  <span
+                    className={`text-xs font-bold tracking-tight ${
                       isDone
-                        ? check.type === "warning"
-                          ? "text-amber-200/80"
-                          : "text-slate-300"
+                        ? checkType === "warning"
+                          ? "text-amber-300"
+                          : "text-emerald-300"
+                        : isRunning
+                        ? "text-white"
                         : "text-slate-500"
                     }`}
                   >
-                    {check.subtext}
-                  </p>
+                    {check.label}
+                  </span>
+
+                  {isDone && (
+                    <span
+                      className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded font-bold shrink-0 ${
+                        checkType === "warning"
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      }`}
+                    >
+                      {checkType === "warning" ? "Flagged" : "Verified"}
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -271,12 +311,9 @@ export default function AuditScannerModal() {
 
         {/* Bottom Footer Note */}
         <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Building executive transaction audit matrix...</span>
-          </div>
+          <span>Building executive transaction audit matrix...</span>
           <span className="text-slate-500 font-mono text-[10px]">
-            Step 2/5 • Live Simulation
+            {isLiveMode ? footerTag || "EPO OPS v3.2 • Live Query" : "Step 2/5 • Live Simulation"}
           </span>
         </div>
       </div>

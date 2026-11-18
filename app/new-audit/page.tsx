@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -21,7 +21,11 @@ import {
   Layers,
   Database
 } from 'lucide-react';
-import { useDeal } from '@/components/DealContext';
+import { useDeal, evaluatePatentAsset } from '@/components/DealContext';
+import AuditScannerModal, {
+  SCANNER_MIN_DURATION_MS,
+  LiveScanFlags
+} from '@/components/AuditScannerModal';
 import {
   SAMPLE_MA_PATENTS,
   DEFAULT_TARGET_COMPANY,
@@ -34,7 +38,8 @@ export default function NewAuditPage() {
     targetCompany,
     setTargetCompany,
     setPortfolioData,
-    resetToShowcase
+    resetToShowcase,
+    saveAuditRecord
   } = useDeal();
 
   const [activeTab, setActiveTab] = useState<'PRESETS' | 'LIVE_EPO'>('PRESETS');
@@ -45,14 +50,48 @@ export default function NewAuditPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [liveError, setLiveError] = useState<{ title: string; message: string; isMissingCredentials?: boolean } | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [liveScan, setLiveScan] = useState<{
+    isOpen: boolean;
+    targetName: string;
+    patentCount: number;
+    isApiReady: boolean;
+    liveFlags: LiveScanFlags | null;
+    modeBadge?: string;
+    footerTag?: string;
+  } | null>(null);
+  const isMountedRef = useRef(true);
 
-  // Preset Handler (Project Aetheris — MedTech Deal)
-  const handleLoadAetheris = () => {
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Preset Handler (Project Aetheris — MedTech Deal, with full 8-second scanner animation)
+  const handleLoadAetheris = async () => {
+    if (liveScan?.isOpen) return;
+
+    setLiveScan({
+      isOpen: true,
+      targetName: 'Aetheris MedTech GmbH',
+      patentCount: 12,
+      isApiReady: true,
+      liveFlags: {
+        chainOfTitleFlagged: true,
+        maintenanceFlagged: true,
+        oppositionFlagged: true
+      },
+      modeBadge: 'Showcase',
+      footerTag: 'Project Aetheris • Showcase Scan'
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, SCANNER_MIN_DURATION_MS));
+    if (!isMountedRef.current) return;
+
     resetToShowcase();
-    setSuccessMessage('Loaded Project Aetheris (12-patent M&A portfolio review) successfully.');
-    setTimeout(() => {
-      router.push('/overview');
-    }, 800);
+    setLiveScan(null);
+    router.push('/overview');
   };
 
   // Live EPO Audit Submission
@@ -76,12 +115,24 @@ export default function NewAuditPage() {
       return;
     }
 
+    const cleanLiveTarget = liveTargetName.trim() || 'Target Company';
+    const scanStartTime = Date.now();
+
+    // Open real-time scanner modal while querying the live EPO OPS v3.2 API
+    setLiveScan({
+      isOpen: true,
+      targetName: cleanLiveTarget,
+      patentCount: patentNumbers.length,
+      isApiReady: false,
+      liveFlags: null
+    });
+
     try {
       const res = await fetch('/api/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          targetCompanyName: liveTargetName.trim() || 'Target Company',
+          targetCompanyName: cleanLiveTarget,
           patentNumbers
         })
       });
@@ -89,6 +140,8 @@ export default function NewAuditPage() {
       const data = await res.json();
 
       if (!res.ok || data.status !== 'OK') {
+        if (!isMountedRef.current) return;
+        setLiveScan(null);
         if (data.status === 'MISSING_EPO_CREDENTIALS') {
           setLiveError({
             title: 'EPO OPS Credentials Required for Live Registry Audits',
@@ -106,7 +159,6 @@ export default function NewAuditPage() {
       }
 
       // Convert audited records to portfolio items
-      const cleanLiveTarget = liveTargetName.trim() || 'Target Company';
       const livePatents: SamplePatentRecord[] = (data.auditedRecords || []).map((rec: any, idx: number) => {
         const id = rec.epodoc || rec.docdb || rec.rawInput || `EP-${idx + 1}`;
         const owner = rec.applicants?.[0] || 'Unknown Recorded Owner';
@@ -175,24 +227,65 @@ export default function NewAuditPage() {
         };
       });
 
-      setTargetCompany(liveTargetName.trim() || 'Target Company');
+      const evaluated = livePatents.map((p) => evaluatePatentAsset(p, cleanLiveTarget));
+      const liveFlags: LiveScanFlags = {
+        chainOfTitleFlagged: evaluated.some((a) =>
+          a.checks.some((c) => c.id === 'CHAIN_OF_TITLE' && c.status !== 'CLEAN')
+        ),
+        maintenanceFlagged: evaluated.some((a) =>
+          a.checks.some((c) => c.id === 'MAINTENANCE_FEES' && c.status !== 'CLEAN')
+        ),
+        oppositionFlagged: evaluated.some((a) =>
+          a.checks.some((c) => c.id === 'OPPOSITION_DISPUTE' && c.status !== 'CLEAN')
+        )
+      };
+
+      if (isMountedRef.current) {
+        setLiveScan((prev) =>
+          prev
+            ? { ...prev, patentCount: livePatents.length || prev.patentCount, isApiReady: true, liveFlags }
+            : null
+        );
+      }
+
+      // Ensure the scanner runs at least as long as the demo (8s) before moving to /overview
+      const elapsedMs = Date.now() - scanStartTime;
+      const remainingMs = Math.max(0, SCANNER_MIN_DURATION_MS - elapsedMs);
+      await new Promise((resolve) => setTimeout(resolve, remainingMs > 0 ? remainingMs : 600));
+
+      if (!isMountedRef.current) return;
+
+      setTargetCompany(cleanLiveTarget);
       setPortfolioData(livePatents);
-      setSuccessMessage(`Successfully audited ${livePatents.length} assets from live EPO Register! Redirecting...`);
-      setTimeout(() => {
-        router.push('/overview');
-      }, 1200);
+      saveAuditRecord(cleanLiveTarget, livePatents, `${cleanLiveTarget} — Live EPO Registry Scan`);
+      setLiveScan(null);
+      router.push('/overview');
     } catch (err: any) {
+      if (!isMountedRef.current) return;
+      setLiveScan(null);
       setLiveError({
         title: 'Connection Error',
         message: err.message || 'Failed to connect to the audit API endpoint.'
       });
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {/* Real-Time Statutory Audit Scanner Modal (Live EPO API & Showcase) */}
+      <AuditScannerModal
+        isOpen={Boolean(liveScan?.isOpen)}
+        targetName={liveScan?.targetName}
+        patentCount={liveScan?.patentCount}
+        isApiReady={liveScan?.isApiReady}
+        liveFlags={liveScan?.liveFlags}
+        modeBadge={liveScan?.modeBadge}
+        footerTag={liveScan?.footerTag}
+      />
       {/* Header */}
       <div className="space-y-3">
         <Link

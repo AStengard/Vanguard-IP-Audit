@@ -170,16 +170,6 @@ export default function DemoNarratorBox() {
                 ))}
               </ul>
             )}
-
-            {/* Why this matters / Deal Impact Box */}
-            <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                Deal &amp; Audit Impact:
-              </span>
-              <p className="text-[11px] text-slate-300 leading-normal font-serif">
-                {narration.dealImpact}
-              </p>
-            </div>
           </div>
         )}
       </div>

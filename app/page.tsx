@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,9 +22,13 @@ import {
   Loader2,
   Key
 } from 'lucide-react';
-import { useDeal } from '@/components/DealContext';
+import { useDeal, evaluatePatentAsset } from '@/components/DealContext';
 import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
 import DemoSpotlight from '@/components/DemoSpotlight';
+import AuditScannerModal, {
+  SCANNER_MIN_DURATION_MS,
+  LiveScanFlags
+} from '@/components/AuditScannerModal';
 import { SamplePatentRecord } from '@/lib/sampleDeal';
 
 export default function LandingPortalPage() {
@@ -46,6 +50,23 @@ export default function LandingPortalPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<{ title: string; message: string; isMissingCredentials?: boolean } | null>(null);
   const [showSyntheticPointer, setShowSyntheticPointer] = useState(false);
+  const [liveScan, setLiveScan] = useState<{
+    isOpen: boolean;
+    targetName: string;
+    patentCount: number;
+    isApiReady: boolean;
+    liveFlags: LiveScanFlags | null;
+    modeBadge?: string;
+    footerTag?: string;
+  } | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // --------------------------------------------------------------------------
   // RECRUITER AUTO-DEMO: STEP 1 AUTO-SCROLL TO INPUT FORM
@@ -134,9 +155,29 @@ export default function LandingPortalPage() {
     setCustomTarget('Aetheris MedTech GmbH');
   };
 
-  // Launch the Pre-made Showcase Template
-  const handleLaunchShowcase = () => {
+  // Launch the Pre-made Showcase Template (with full 8-second real-time scanner animation)
+  const handleLaunchShowcase = async () => {
+    if (liveScan?.isOpen) return;
+
+    setLiveScan({
+      isOpen: true,
+      targetName: 'Aetheris MedTech GmbH',
+      patentCount: 12,
+      isApiReady: true,
+      liveFlags: {
+        chainOfTitleFlagged: true,
+        maintenanceFlagged: true,
+        oppositionFlagged: true
+      },
+      modeBadge: 'Showcase',
+      footerTag: 'Project Aetheris • Showcase Scan'
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, SCANNER_MIN_DURATION_MS));
+    if (!isMountedRef.current) return;
+
     resetToShowcase();
+    setLiveScan(null);
     router.push('/overview');
   };
 
@@ -161,6 +202,16 @@ export default function LandingPortalPage() {
     }
 
     const cleanTargetName = customTarget.trim() || 'Target Company';
+    const scanStartTime = Date.now();
+
+    // Open the real-time scanner modal while querying the live EPO OPS v3.2 API
+    setLiveScan({
+      isOpen: true,
+      targetName: cleanTargetName,
+      patentCount: patentNumbers.length,
+      isApiReady: false,
+      liveFlags: null
+    });
 
     // Query Live EPO OPS v3.2 API
     try {
@@ -176,6 +227,8 @@ export default function LandingPortalPage() {
       const data = await res.json();
 
       if (!res.ok || data.status !== 'OK') {
+        if (!isMountedRef.current) return;
+        setLiveScan(null);
         if (data.status === 'MISSING_EPO_CREDENTIALS') {
           setApiError({
             title: 'EPO OPS Credentials Required for Live Registry Audits',
@@ -261,12 +314,44 @@ export default function LandingPortalPage() {
         };
       });
 
+      // Evaluate actual findings so the scanner reflects true live Flagged / Verified pillar results
+      const evaluated = livePatents.map((p) => evaluatePatentAsset(p, cleanTargetName));
+      const liveFlags: LiveScanFlags = {
+        chainOfTitleFlagged: evaluated.some((a) =>
+          a.checks.some((c) => c.id === 'CHAIN_OF_TITLE' && c.status !== 'CLEAN')
+        ),
+        maintenanceFlagged: evaluated.some((a) =>
+          a.checks.some((c) => c.id === 'MAINTENANCE_FEES' && c.status !== 'CLEAN')
+        ),
+        oppositionFlagged: evaluated.some((a) =>
+          a.checks.some((c) => c.id === 'OPPOSITION_DISPUTE' && c.status !== 'CLEAN')
+        )
+      };
+
+      if (isMountedRef.current) {
+        setLiveScan((prev) =>
+          prev
+            ? { ...prev, patentCount: livePatents.length || prev.patentCount, isApiReady: true, liveFlags }
+            : null
+        );
+      }
+
+      // Ensure the scanner always runs at least as long as the demo (8s) before moving to /overview
+      const elapsedMs = Date.now() - scanStartTime;
+      const remainingMs = Math.max(0, SCANNER_MIN_DURATION_MS - elapsedMs);
+      await new Promise((resolve) => setTimeout(resolve, remainingMs > 0 ? remainingMs : 600));
+
+      if (!isMountedRef.current) return;
+
       setTargetCompany(cleanTargetName);
       setPortfolioData(livePatents);
       saveAuditRecord(cleanTargetName, livePatents, `${cleanTargetName} — Live EPO Registry Scan`);
+      setLiveScan(null);
       setIsSubmitting(false);
       router.push('/overview');
     } catch (err: any) {
+      if (!isMountedRef.current) return;
+      setLiveScan(null);
       setApiError({
         title: 'Connection Error',
         message: err.message || 'Failed to connect to the audit endpoint.'
@@ -277,6 +362,16 @@ export default function LandingPortalPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+      {/* Real-Time Statutory Audit Scanner Modal (Live EPO API & Showcase) */}
+      <AuditScannerModal
+        isOpen={Boolean(liveScan?.isOpen)}
+        targetName={liveScan?.targetName}
+        patentCount={liveScan?.patentCount}
+        isApiReady={liveScan?.isApiReady}
+        liveFlags={liveScan?.liveFlags}
+        modeBadge={liveScan?.modeBadge}
+        footerTag={liveScan?.footerTag}
+      />
       {/* =====================================================================
           1. ACTIVE TRANSACTION RESUME BANNER (If session already exists)
       ====================================================================== */}
@@ -449,21 +544,11 @@ export default function LandingPortalPage() {
               </div>
             </DemoSpotlight>
 
-            {/* Submit Button with Synthetic Pointer & Glowing Ring */}
-            <div className="pt-2 relative">
-              {/* Synthetic Pointer cursor pointing at the button */}
+            {/* Submit Button with Bouncing Badge & Glowing Ring */}
+            <div className="pt-4 relative">
               {isDemoActive && currentStepIndex === 0 && showSyntheticPointer && (
-                <div className="absolute -top-10 right-1/4 sm:right-1/3 z-30 pointer-events-none flex items-center gap-1.5 animate-bounce">
-                  <div className="relative">
-                    <svg
-                      className="w-7 h-7 text-emerald-400 drop-shadow-lg fill-emerald-400 stroke-slate-900 stroke-2 -rotate-45"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M3 3l7 18 3-7 7-3L3 3z" />
-                    </svg>
-                    <span className="absolute -inset-1 rounded-full bg-emerald-400/50 animate-ping -z-10" />
-                  </div>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-emerald-300 border border-emerald-500/50 text-[10px] font-mono font-bold shadow-xl">
+                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-bounce">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-600 text-white border-2 border-white text-[10px] font-black uppercase tracking-wider shadow-xl whitespace-nowrap">
                     Triggering 5-Pillar Audit...
                   </span>
                 </div>
