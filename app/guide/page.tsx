@@ -91,20 +91,20 @@ export default function GuidePage() {
       </div>
 
       {/* =====================================================================
-          3. THE 5 STATUTORY EPC PILLARS
+          3. CORE EPC DUE DILIGENCE CHECKS
       ====================================================================== */}
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
-            The 5 Statutory EPC Audit Pillars
+            Core EPC Due Diligence Checks
           </h2>
           <p className="text-xs text-slate-500">
-            How Vanguard IP Audit automatically applies European patent law to protect the buyer
+            Automated checks covering five core European Patent Convention (EPC) diligence areas: Chain of Title, Maintenance, Opposition, Territorial Scope, and Term Runway.
           </p>
         </div>
 
         <div className="space-y-4">
-          {/* Pillar 1 */}
+          {/* Check 1 */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 font-extrabold text-sm flex items-center justify-center shrink-0">
@@ -122,7 +122,7 @@ export default function GuidePage() {
             </p>
           </div>
 
-          {/* Pillar 2 */}
+          {/* Check 2 */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 font-extrabold text-sm flex items-center justify-center shrink-0">
@@ -140,7 +140,7 @@ export default function GuidePage() {
             </p>
           </div>
 
-          {/* Pillar 3 */}
+          {/* Check 3 */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-800 font-extrabold text-sm flex items-center justify-center shrink-0">
@@ -158,7 +158,7 @@ export default function GuidePage() {
             </p>
           </div>
 
-          {/* Pillar 4 */}
+          {/* Check 4 */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-xl bg-blue-100 text-blue-800 font-extrabold text-sm flex items-center justify-center shrink-0">
@@ -176,7 +176,7 @@ export default function GuidePage() {
             </p>
           </div>
 
-          {/* Pillar 5 */}
+          {/* Check 5 */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-3">
             <div className="flex items-center gap-3">
               <span className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 font-extrabold text-sm flex items-center justify-center shrink-0">

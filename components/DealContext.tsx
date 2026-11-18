@@ -76,6 +76,7 @@ export interface EvaluatedAsset extends SamplePatentRecord {
   yearsRemaining: number;
   monthsRemaining: number;
   activeJurisdictionsCount: number;
+  isNotFoundInEpo?: boolean;
 }
 
 export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: string): EvaluatedAsset {
@@ -83,6 +84,79 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
   const recordedOwner = patent.registeredProprietor || 'Unknown Recorded Proprietor';
   const similarity = computeSimilarity(recordedOwner, targetCompany);
   const epoStatusStr = String(patent.epoStatus || 'GRANTED_ACTIVE').toUpperCase();
+
+  // Special Case: Patent number did not match any official EPO OPS record
+  if (epoStatusStr === 'NOT_FOUND_IN_EPO' || Boolean(patent.notFoundInEpo)) {
+    const reason =
+      patent.notFoundReason ||
+      `Patent number "${patent.id}" did not match any published European patent or register entry in the official EPO OPS v3.2 database.`;
+
+    const notFoundChecks: AuditCheck[] = [
+      {
+        id: 'CHAIN_OF_TITLE',
+        number: 1,
+        title: 'Chain of Title & Ownership',
+        citation: 'EPO OPS v3.2 Lookup',
+        status: 'CRITICAL',
+        headline: 'No Matching EPO Patent Record Found',
+        lawyerNote: `${reason} Ownership cannot be verified against "${targetCompany}". Common causes include a typographical error on Schedule 3.14, an unpublished application (<18 months from filing), or a non-EP national patent number.`,
+        dealImpact: 'Request immediate clarification and official filing receipt or corrected EP number from Seller before signing.'
+      },
+      {
+        id: 'MAINTENANCE_FEES',
+        number: 2,
+        title: 'Maintenance & Renewal Status',
+        citation: 'Art. 86 & Rule 51(2) EPC',
+        status: 'CRITICAL',
+        headline: 'Unable to Verify (Not Found in EPO)',
+        lawyerNote: 'Renewal fee standing could not be verified because no matching record exists in the European Patent Register.',
+        dealImpact: 'Do not rely on Seller subsistence warranties until the official patent number is confirmed.'
+      },
+      {
+        id: 'OPPOSITION_DISPUTE',
+        number: 3,
+        title: 'Post-Grant Opposition Standing',
+        citation: 'Art. 99 & Art. 101 EPC',
+        status: 'CRITICAL',
+        headline: 'Unable to Verify (Not Found in EPO)',
+        lawyerNote: 'Opposition register status could not be verified for an unmatched patent identifier.',
+        dealImpact: 'Re-run EPO verification once Seller provides the corrected publication or application number.'
+      },
+      {
+        id: 'TERRITORIAL_COVERAGE',
+        number: 4,
+        title: 'Territorial Scope & Validation',
+        citation: 'Art. 65 EPC / Reg. 1257/2012',
+        status: 'CRITICAL',
+        headline: 'Zero Verified Jurisdictions (Unmatched)',
+        lawyerNote: 'No active European contracting states or Unitary Patent records matched this identifier.',
+        dealImpact: 'Exclude unverified asset from Schedule 3.14 until documentary proof is uploaded to the VDR.'
+      },
+      {
+        id: 'REMAINING_TERM',
+        number: 5,
+        title: '20-Year Statutory Term Runway',
+        citation: 'Art. 63(1) EPC',
+        status: 'CRITICAL',
+        headline: 'Unverified Term (Not Found in EPO)',
+        lawyerNote: 'Filing date and statutory expiration date could not be retrieved from EPO OPS.',
+        dealImpact: 'Assign zero confirmed exclusivity value until verified.'
+      }
+    ];
+
+    return {
+      ...patent,
+      overallRisk: 'CRITICAL',
+      primaryIssue: 'Patent Number Not Found in EPO Register',
+      recommendedAction: 'Verify EP Number / Correct Schedule 3.14',
+      checks: notFoundChecks,
+      titleMatchPct: 0,
+      yearsRemaining: 0,
+      monthsRemaining: 0,
+      activeJurisdictionsCount: 0,
+      isNotFoundInEpo: true
+    };
+  }
 
   // 1. Chain of Title (Art. 72 & Rule 22 EPC)
   let check1Status: 'CLEAN' | 'WARNING' | 'CRITICAL' = 'CLEAN';
@@ -513,11 +587,11 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
       `"${(p.title || '').replace(/"/g, '""')}"`,
       `"${(p.registeredProprietor || '').replace(/"/g, '""')}"`,
       `"${(targetCompany || '').replace(/"/g, '""')}"`,
-      p.overallRisk,
+      p.isNotFoundInEpo ? 'NOT_FOUND_IN_EPO' : p.overallRisk,
       `"${(p.primaryIssue || '').replace(/"/g, '""')}"`,
       `"${(p.recommendedAction || '').replace(/"/g, '""')}"`,
-      p.yearsRemaining,
-      p.unitaryPatent ? 'Yes' : 'No'
+      p.isNotFoundInEpo ? 'N/A' : p.yearsRemaining,
+      p.isNotFoundInEpo ? 'Unverified' : p.unitaryPatent ? 'Yes' : 'No'
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');

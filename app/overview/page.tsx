@@ -35,6 +35,7 @@ export default function OverviewPage() {
   // Find the critical red flags to feature on the executive action center
   const criticalAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'CRITICAL');
   const warningAssets = evaluatedPortfolio.filter((p) => p.overallRisk === 'WARNING');
+  const notFoundAssets = evaluatedPortfolio.filter((p) => p.isNotFoundInEpo);
 
   // Recruiter Demo: Smoothly scroll to the Critical Red Flags section during Step 3
   useEffect(() => {
@@ -162,6 +163,47 @@ export default function OverviewPage() {
           </Link>
         </div>
       </div>
+
+      {/* =====================================================================
+          1B. UNMATCHED / NOT FOUND IN EPO REGISTER ALERT BANNER
+      ====================================================================== */}
+      {notFoundAssets.length > 0 && (
+        <div className="bg-rose-50 border-2 border-rose-300 rounded-2xl p-5 shadow-xs space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+              <XCircle className="w-5 h-5 text-rose-600" />
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm font-extrabold text-rose-950">
+                  {notFoundAssets.length === 1
+                    ? '1 Patent Number Not Found in EPO Register'
+                    : `${notFoundAssets.length} Patent Numbers Not Found in EPO Register`}
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-200 text-rose-900 uppercase tracking-wider">
+                  {notFoundAssets.length} of {evaluatedPortfolio.length} Unmatched
+                </span>
+              </div>
+              <p className="text-xs text-rose-900 leading-relaxed">
+                The live EPO OPS v3.2 lookup could not match the following patent{' '}
+                {notFoundAssets.length === 1 ? 'number' : 'numbers'} to any official European Patent publication or register record. Check for typos, unpublished applications (&lt;18 months from filing), or non-EP national numbers:
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {notFoundAssets.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/patent/${encodeURIComponent(item.id)}`}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-rose-300 text-rose-950 hover:bg-rose-100 font-mono text-xs font-bold transition shadow-2xs"
+                  >
+                    <span>{item.id}</span>
+                    <span className="text-[10px] font-sans font-extrabold text-rose-600">NOT FOUND</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =====================================================================
           2. THE 4 EXECUTIVE KPI SUMMARY CARDS
@@ -319,8 +361,14 @@ export default function OverviewPage() {
                             Flag {idx + 1} of {criticalAssets.length}
                           </span>
                         </div>
-                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
-                          {criticalCheck?.citation || 'Critical Red Flag'}
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold shrink-0 ${
+                          asset.isNotFoundInEpo
+                            ? 'bg-rose-200 text-rose-950 border border-rose-300'
+                            : 'bg-rose-100 text-rose-800 border border-rose-200'
+                        }`}>
+                          {asset.isNotFoundInEpo
+                            ? 'NOT FOUND IN EPO'
+                            : criticalCheck?.citation || 'Critical Red Flag'}
                         </span>
                       </div>
 
@@ -329,7 +377,15 @@ export default function OverviewPage() {
                           {asset.title}
                         </h3>
                         <div className="text-[11px] text-slate-500 mt-0.5">
-                          Recorded Owner: <strong>{asset.registeredProprietor}</strong>
+                          {asset.isNotFoundInEpo ? (
+                            <span className="text-rose-700 font-semibold">
+                              EPO Status: No matching record in EPO OPS v3.2
+                            </span>
+                          ) : (
+                            <>
+                              Recorded Owner: <strong>{asset.registeredProprietor}</strong>
+                            </>
+                          )}
                         </div>
                       </div>
 
@@ -355,7 +411,7 @@ export default function OverviewPage() {
 
                     <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end">
                       <Link
-                        href={`/patent/${asset.id}`}
+                        href={`/patent/${encodeURIComponent(asset.id)}`}
                         className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-emerald-700 transition"
                       >
                         <span>Review Dossier &amp; SPA Clause</span>

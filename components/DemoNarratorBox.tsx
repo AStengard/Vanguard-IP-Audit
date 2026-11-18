@@ -36,8 +36,8 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
     tag: "Live EPO Query",
     tagColor: "bg-teal-500/20 text-teal-300 border-teal-500/30",
     icon: Scale,
-    title: "5-Pillar Statutory Registry Scanner",
-    body: "Querying simulated EPO OPS v3.2 REST endpoints across statutory pillars: Art. 72 (Chain of Title), Art. 86 (Annuity Maintenance), Art. 99 (Opposition Period), and Unitary Patent standing.",
+    title: "EPC Due Diligence Registry Scanner",
+    body: "Querying simulated EPO OPS v3.2 REST endpoints across five core EPC due diligence checks: Art. 72 (Chain of Title), Art. 86 (Annuity Maintenance), Art. 99 (Opposition Period), and Unitary Patent standing.",
     dealImpact: "Manual patent register inspection across 39 member states takes days. Vanguard's statutory engine parses legal status and INPADOC legal events in seconds.",
   },
   2: {

@@ -170,7 +170,7 @@ export default function MemoPage() {
             1. Executive Summary &amp; Risk Rating
           </h2>
           <p className="text-xs text-slate-700 leading-relaxed font-serif">
-            We have conducted a statutory European Patent Convention (EPC) registry audit of the twelve (12) patent assets disclosed on Schedule 3.14 of the draft Share Purchase Agreement (SPA) for the acquisition of <strong>{targetCompany}</strong>. Our audit analyzed: (i) Chain of Title and valid assignment under Article 72 and Rule 22 EPC; (ii) Maintenance and renewal fee standing under Article 86 EPC; (iii) Opposition vulnerability under Article 99 EPC; (iv) Territorial scope under Article 65 EPC and Unitary Patent standing; and (v) Remaining patent commercial runway under Article 63 EPC.
+            We have conducted a statutory European Patent Convention (EPC) registry audit of the <strong>{metrics.total}</strong> patent {metrics.total === 1 ? 'asset' : 'assets'} disclosed on Schedule 3.14 of the draft Share Purchase Agreement (SPA) for the acquisition of <strong>{targetCompany}</strong>. Our audit analyzed: (i) Chain of Title and valid assignment under Article 72 and Rule 22 EPC; (ii) Maintenance and renewal fee standing under Article 86 EPC; (iii) Opposition vulnerability under Article 99 EPC; (iv) Territorial scope under Article 65 EPC and Unitary Patent standing; and (v) Remaining patent commercial runway under Article 63 EPC.
           </p>
 
           {/* Metric Summary Box */}
@@ -220,15 +220,25 @@ export default function MemoPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold text-rose-950 text-sm">{asset.id}</span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-200/80 text-rose-900">
-                        CRITICAL RISK
+                        {asset.isNotFoundInEpo ? 'NOT FOUND IN EPO' : 'CRITICAL RISK'}
                       </span>
                     </div>
-                    <span className="text-slate-500 font-mono text-[11px]">App: {asset.applicationNumber}</span>
+                    <span className="text-slate-500 font-mono text-[11px]">
+                      {asset.isNotFoundInEpo ? 'EPO Lookup: 404 / No Match' : `App: ${asset.applicationNumber}`}
+                    </span>
                   </div>
 
                   <div className="font-bold text-slate-900">{asset.title}</div>
                   <div className="text-slate-700 font-serif">
-                    <strong>Deficiency:</strong> {asset.primaryIssue} Recorded owner on the official register is &quot;{asset.registeredProprietor}&quot; rather than the target company &quot;{targetCompany}&quot;.
+                    {asset.isNotFoundInEpo ? (
+                      <>
+                        <strong>Deficiency:</strong> {asset.primaryIssue}. Patent reference &ldquo;{asset.id}&rdquo; did not match any published patent or register entry in EPO OPS v3.2; ownership, status, and territorial coverage cannot be verified against &ldquo;{targetCompany}&rdquo;.
+                      </>
+                    ) : (
+                      <>
+                        <strong>Deficiency:</strong> {asset.primaryIssue} Recorded owner on the official register is &quot;{asset.registeredProprietor}&quot; rather than the target company &quot;{targetCompany}&quot;.
+                      </>
+                    )}
                   </div>
 
                   <div className="bg-white p-3 rounded-lg border border-rose-200 text-slate-800 font-serif">

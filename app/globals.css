@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Compact proportional scaling on laptop viewports (e.g. 13"-15" laptops at 125%-150% DPI scaling)
+   while keeping external monitors (1400px+) at full 100% (16px) default sizing */
+@media (min-width: 1024px) and (max-width: 1399px) {
+  html {
+    font-size: 14px;
+  }
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;

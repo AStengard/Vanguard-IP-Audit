@@ -109,7 +109,11 @@ export default function PatentDossierPage() {
                 {asset.id}
               </span>
 
-              {asset.unitaryPatent ? (
+              {asset.isNotFoundInEpo ? (
+                <span className="px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-900 border border-rose-300">
+                  Not Found in EPO Register
+                </span>
+              ) : asset.unitaryPatent ? (
                 <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                   Unitary Patent (17 States)
                 </span>
@@ -120,19 +124,24 @@ export default function PatentDossierPage() {
               )}
 
               {/* Due Diligence Standing Status Pill */}
-              {isCritical && (
+              {asset.isNotFoundInEpo ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-50 text-rose-800 border border-rose-200">
+                  <ShieldAlert className="w-4 h-4 text-rose-600" />
+                  <span>UNMATCHED PATENT NUMBER</span>
+                </span>
+              ) : isCritical ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-50 text-rose-800 border border-rose-200">
                   <ShieldAlert className="w-4 h-4 text-rose-600" />
                   <span>CRITICAL RISK</span>
                 </span>
-              )}
-              {isWarning && (
+              ) : null}
+              {!asset.isNotFoundInEpo && isWarning && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
                   <AlertTriangle className="w-4 h-4 text-amber-600" />
                   <span>MATERIAL WARNING</span>
                 </span>
               )}
-              {isClean && (
+              {!asset.isNotFoundInEpo && isClean && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                   <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   <span>VERIFIED CLEAN</span>
@@ -173,21 +182,27 @@ export default function PatentDossierPage() {
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
               Application No.
             </span>
-            <span className="font-mono font-semibold text-slate-800">{asset.applicationNumber}</span>
+            <span className="font-mono font-semibold text-slate-800">
+              {asset.isNotFoundInEpo ? 'Not Found in EPO' : asset.applicationNumber}
+            </span>
           </div>
 
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
               Filing Date
             </span>
-            <span className="font-semibold text-slate-800">{asset.filingDate}</span>
+            <span className="font-semibold text-slate-800">
+              {asset.isNotFoundInEpo ? 'Not Found' : asset.filingDate || 'N/A'}
+            </span>
           </div>
 
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
               Grant Date
             </span>
-            <span className="font-semibold text-slate-800">{asset.grantDate || 'Pending / In Prosecution'}</span>
+            <span className="font-semibold text-slate-800">
+              {asset.isNotFoundInEpo ? 'Not Found' : asset.grantDate || 'Pending / In Prosecution'}
+            </span>
           </div>
 
           <div>
@@ -195,7 +210,9 @@ export default function PatentDossierPage() {
               Statutory Runway
             </span>
             <span className="font-semibold text-slate-800">
-              {asset.yearsRemaining > 0 ? (
+              {asset.isNotFoundInEpo ? (
+                <span className="text-rose-600 font-bold">Unverified (Not Found)</span>
+              ) : asset.yearsRemaining > 0 ? (
                 <span>~{asset.yearsRemaining} years ({asset.monthsRemaining} mos)</span>
               ) : (
                 <span className="text-rose-600 font-bold">Lapsed / Expired</span>
@@ -205,29 +222,50 @@ export default function PatentDossierPage() {
         </div>
 
         {/* Chain of Title Match Banner */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className={`border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
+          asset.isNotFoundInEpo
+            ? 'bg-rose-50/70 border-rose-200'
+            : 'bg-slate-50 border-slate-200'
+        }`}>
           <div className="flex items-center gap-3">
-            <Building2 className="w-4 h-4 text-slate-400 shrink-0" />
+            <Building2 className={`w-4 h-4 shrink-0 ${asset.isNotFoundInEpo ? 'text-rose-500' : 'text-slate-400'}`} />
             <div>
-              <span className="text-slate-500">Registered Proprietor: </span>
-              <strong className="text-slate-900">{asset.registeredProprietor}</strong>
+              {asset.isNotFoundInEpo ? (
+                <>
+                  <span className="text-rose-700 font-semibold">EPO Register Lookup: </span>
+                  <strong className="text-rose-950">No matching patent record found for &ldquo;{asset.id}&rdquo;</strong>
+                </>
+              ) : (
+                <>
+                  <span className="text-slate-500">Registered Proprietor: </span>
+                  <strong className="text-slate-900">{asset.registeredProprietor}</strong>
+                </>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-slate-500">Target Match:</span>
-            <span
-              className={`px-2 py-0.5 rounded font-mono font-bold ${
-                asset.titleMatchPct >= 90
-                  ? 'bg-emerald-100 text-emerald-800'
-                  : asset.titleMatchPct >= 70
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-rose-100 text-rose-800'
-              }`}
-            >
-              {asset.titleMatchPct}%
-            </span>
-            <span className="text-slate-400">vs {targetCompany}</span>
+            {asset.isNotFoundInEpo ? (
+              <span className="px-2.5 py-0.5 rounded font-mono font-extrabold bg-rose-200 text-rose-950">
+                NOT FOUND IN EPO
+              </span>
+            ) : (
+              <>
+                <span className="text-slate-500">Target Match:</span>
+                <span
+                  className={`px-2 py-0.5 rounded font-mono font-bold ${
+                    asset.titleMatchPct >= 90
+                      ? 'bg-emerald-100 text-emerald-800'
+                      : asset.titleMatchPct >= 70
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-rose-100 text-rose-800'
+                  }`}
+                >
+                  {asset.titleMatchPct}%
+                </span>
+                <span className="text-slate-400">vs {targetCompany}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -276,15 +314,15 @@ export default function PatentDossierPage() {
       </div>
 
       {/* =====================================================================
-          4. 5-PILLAR EPC STATUTORY AUDIT SCORECARD
+          4. EPC DUE DILIGENCE SCORECARD (5 CHECKS)
       ====================================================================== */}
       <div className="space-y-4">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900 tracking-tight">
-            Statutory EPC Legal Scorecard (5 Pillars)
+            EPC Due Diligence Scorecard (5 Checks)
           </h2>
           <p className="text-xs text-slate-500">
-            Automated statutory diligence checks based on the European Patent Convention articles and implementing regulations.
+            Automated due diligence checks mapped to the relevant European Patent Convention (EPC) articles and implementing regulations.
           </p>
         </div>
 
@@ -374,7 +412,16 @@ export default function PatentDossierPage() {
           </h2>
         </div>
 
-        {asset.unitaryPatent ? (
+        {asset.isNotFoundInEpo ? (
+          <div className="bg-rose-50/70 border border-rose-200 rounded-xl p-4 space-y-1.5 text-xs">
+            <div className="font-bold text-rose-950">
+              No Territorial Validations Found — Patent Number Unmatched
+            </div>
+            <p className="text-rose-900 leading-relaxed">
+              National validations under Article 65 EPC and Unitary Patent status could not be retrieved because &ldquo;{asset.id}&rdquo; did not match any record in the official EPO OPS v3.2 database.
+            </p>
+          </div>
+        ) : asset.unitaryPatent ? (
           <div className="bg-indigo-50/60 border border-indigo-200 rounded-xl p-4 space-y-2 text-xs">
             <div className="font-bold text-indigo-950 flex items-center gap-2">
               <span>Unitary Patent Protection Active</span>

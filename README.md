@@ -1,4 +1,4 @@
-﻿# Vanguard IP Audit — European Patent M&A Due Diligence Suite
+# Vanguard IP Audit — European Patent M&A Due Diligence Suite
 
 > **Legal Tech Portfolio Project by [Alfred Stengard](https://astengard.github.io/cv/)** | Built with **Next.js 15 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS**, and the **European Patent Office (EPO) Open Patent Services (OPS) REST API v3.2**.
 
@@ -13,7 +13,7 @@ Manual verification across dozens of patent families routinely consumes **substa
 - **Patents in Grace Periods (Rule 51(2) EPC):** Missed renewal fees sitting inside the EPO's 6-month surcharge window that will permanently lapse if not cured before closing.
 - **Central Oppositions (Art. 99 EPC):** Active competitor oppositions threatening to revoke protection across up to 39 EPC contracting states in a single proceeding.
 
-**Vanguard IP Audit** automates this preliminary legal diligence workflow. It queries the official **EPO OPS v3.2 REST API** through a zero-leakage server proxy, evaluates every patent across **5 statutory EPC risk pillars**, and generates partner-ready **Executive Due Diligence Memoranda (Print/PDF)**, **Individual Patent Dossiers with copyable SPA clauses**, and **Schedule 3.14 CSV spreadsheets**.
+**Vanguard IP Audit** automates this preliminary legal diligence workflow. It queries the official **EPO OPS v3.2 REST API** through a zero-leakage server proxy, evaluates every patent across **5 core EPC due diligence checks**, and generates partner-ready **Executive Due Diligence Memoranda (Print/PDF)**, **Individual Patent Dossiers with copyable SPA clauses**, and **Schedule 3.14 CSV spreadsheets**.
 
 ---
 
@@ -32,10 +32,10 @@ Designed so recruiters, M&A partners, and reviewers can explore the complete wor
 
 ### B. Live EPO OPS v3.2 API Integration
 - **Direct Live Queries (`/`):** Enter any target company name and up to 15 real European patent numbers to query the official European Patent Office (`/number-service`, `/biblio`, `/legal`, `/family`, `/register`).
-- **Real-Time Live Scanner Modal:** Displays the animated 5-module Audit Scanner (minimum 8-second scan cadence matching the demo) and dynamically reveals real `Flagged` or `Verified` pillar results from the live EPO records before routing to `/overview`.
+- **Real-Time Live Scanner Modal:** Displays the animated 5-check Audit Scanner (minimum 8-second scan cadence matching the demo) and dynamically reveals real `Flagged`, `Verified`, or `Not Found` check results from the live EPO records before routing to `/overview`.
 - **Smart `New Audit` Action:** Clicking **New Audit** from any page clears previous inputs, scrolls smoothly to the live audit form, focuses the Target Company input, and flashes a subtle confirmation ring.
 
-### C. Automated 5-Pillar Statutory EPC Rules Engine
+### C. Core EPC Due Diligence Checks
 1. **Chain of Title & Ownership Verification (Art. 72 & Rule 22 EPC):** Strips corporate suffixes (`GmbH`, `AG`, `Ltd`, `Inc`, `AB`, `SAS`, `BV`, `S.r.l.`) and runs fuzzy entity similarity matching between the recorded EPO proprietor and the Target Company Legal Entity.
 2. **Maintenance & Renewal Fee Standing (Art. 86 & Rule 51(2) EPC):** Tracks renewal standing, active 6-month surcharge grace periods, and lapsed assets.
 3. **Post-Grant Opposition & Dispute Detection (Art. 99 & Art. 101 EPC):** Flags pending competitor oppositions and newly granted `B1` patents still inside the 9-month opposition window.
@@ -44,7 +44,7 @@ Designed so recruiters, M&A partners, and reviewers can explore the complete wor
 
 ### D. Law Firm Deliverables & Audit History Vault
 - **Executive Legal Due Diligence Memorandum (`/memo`):** Print-ready PDF memorandum with aligned **Section 3.14** warranties and **Schedule 3.14** patent disclosures, Conditions Precedent, and Post-Closing Integration Covenants.
-- **Individual Patent Dossiers (`/patent/[id]`):** Complete 5-pillar legal scorecard, national validation grid, INPADOC legal events timeline, and 1-click **Copy SPA Draft Clause**.
+- **Individual Patent Dossiers (`/patent/[id]`):** Complete EPC due diligence scorecard (5 checks), national validation grid, INPADOC legal events timeline, and 1-click **Copy SPA Draft Clause**.
 - **Schedule 3.14 CSV Export:** Available directly on Overview, Portfolio Schedule, Executive Memo, Audit History, and the Demo Completion summary.
 - **Audit History & Deal Vault (`/history`):** Persists completed audits in browser `localStorage` with re-open, rename, CSV export, and delete actions.
 
@@ -102,18 +102,18 @@ vanguard-ip-audit/
 │   ├── page.tsx                       # Landing page: Recruiter Demo banner + Live EPO Audit form
 │   ├── overview/page.tsx              # Executive KPI dashboard & 4 Critical Red Flags grid
 │   ├── portfolio/page.tsx             # Full Schedule 3.14 searchable/filterable table & CSV export
-│   ├── patent/[id]/page.tsx           # Individual patent dossier, 5-pillar scorecard & SPA clause copy
+│   ├── patent/[id]/page.tsx           # Individual patent dossier, EPC due diligence scorecard & SPA clause copy
 │   ├── memo/page.tsx                  # Print/PDF Executive Due Diligence Memorandum (Section 3.14)
 │   ├── history/page.tsx               # Audit History & Deal Vault (localStorage persistence)
 │   ├── guide/page.tsx                 # Non-technical "How It Works" legal framework guide
 │   └── api/audit/route.ts             # Server-only EPO OPS v3.2 proxy with rate limiting
 ├── components/
 │   ├── Navbar.tsx                     # Top navigation bar, Watch Recruiter Demo & New Audit actions
-│   ├── DealContext.tsx                # 5-pillar statutory evaluator, state, CSV export & Deal Vault
+│   ├── DealContext.tsx                # Core EPC due diligence evaluator, state, CSV export & Deal Vault
 │   ├── RecruiterDemoContext.tsx       # 5-step walkthrough state (paused by default, Back/Next, Esc)
 │   ├── DemoPlayerBar.tsx              # Floating glassmorphism HUD controller (Play/Pause/Back/Next)
 │   ├── DemoNarratorBox.tsx            # Floating step-by-step Tour Commentary box
-│   ├── DemoSpotlight.tsx              # High-contrast spotlight rings & bouncing callout badges
+│   ├── DemoSpotlight.tsx              # High-contrast spotlight rings & callout badges
 │   ├── AuditScannerModal.tsx          # Animated 8s statutory scanner (Demo & Live EPO API)
 │   └── DemoCompletionModal.tsx        # Final executive summary card & Digital CV link
 └── lib/
@@ -147,7 +147,7 @@ vanguard-ip-audit/
    EPO_OPS_CONSUMER_KEY=your_real_epo_consumer_key_here
    EPO_OPS_SECRET=your_real_epo_consumer_secret_here
    ```
-4. Enter any Target Company Legal Entity and European Patent numbers on the landing page and click **Run Live EPO 5-Pillar Audit**.
+4. Enter any Target Company Legal Entity and European Patent numbers on the landing page and click **Run Live EPO Diligence Audit**.
 
 ---
 

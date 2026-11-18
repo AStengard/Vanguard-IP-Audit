@@ -120,7 +120,7 @@ export default function PortfolioPage() {
           </h1>
           <p className="text-xs text-slate-600 mt-1 max-w-2xl">
             Statutory legal due diligence audit for <strong className="text-slate-900">{targetCompany}</strong>. 
-            Click any patent to review its 5-pillar EPC audit scorecard, legal history, and recommended contract remedy.
+            Click any patent to review its EPC due diligence scorecard, legal history, and recommended contract remedy.
           </p>
         </div>
 
@@ -255,7 +255,9 @@ export default function PortfolioPage() {
                   return (
                     <tr
                       key={asset.id}
-                      className="hover:bg-slate-50/80 transition group"
+                      className={`hover:bg-slate-50/80 transition group ${
+                        asset.isNotFoundInEpo ? 'bg-rose-50/30' : ''
+                      }`}
                     >
                       {/* Schedule Row Index */}
                       <td className="py-4 px-4 text-center font-mono text-[11px] text-slate-400">
@@ -267,25 +269,41 @@ export default function PortfolioPage() {
                         <div className="space-y-1 max-w-sm">
                           <div className="flex items-center gap-2 flex-wrap">
                             <Link
-                              href={`/patent/${asset.id}`}
+                              href={`/patent/${encodeURIComponent(asset.id)}`}
                               className="font-mono font-bold text-slate-900 hover:text-emerald-700 underline underline-offset-2 decoration-slate-300 hover:decoration-emerald-700 transition"
                             >
                               {asset.id}
                             </Link>
-                            {asset.unitaryPatent && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                UP (17 States)
+                            {asset.isNotFoundInEpo ? (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                                NOT FOUND IN EPO
                               </span>
+                            ) : (
+                              <>
+                                {asset.unitaryPatent && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    UP (17 States)
+                                  </span>
+                                )}
+                                <span className="text-[10px] text-slate-400 font-mono">
+                                  App: {asset.applicationNumber}
+                                </span>
+                              </>
                             )}
-                            <span className="text-[10px] text-slate-400 font-mono">
-                              App: {asset.applicationNumber}
-                            </span>
                           </div>
-                          <div className="text-slate-700 font-medium line-clamp-1 group-hover:text-slate-900 transition">
+                          <div className={`font-medium line-clamp-1 transition ${
+                            asset.isNotFoundInEpo
+                              ? 'text-rose-800 font-semibold'
+                              : 'text-slate-700 group-hover:text-slate-900'
+                          }`}>
                             {asset.title}
                           </div>
                           <div className="text-[11px] text-slate-400">
-                            {asset.yearsRemaining > 0 ? (
+                            {asset.isNotFoundInEpo ? (
+                              <span className="text-rose-600 font-semibold">
+                                No matching record in EPO OPS v3.2
+                              </span>
+                            ) : asset.yearsRemaining > 0 ? (
                               <span>Term Runway: ~{asset.yearsRemaining} yrs ({asset.monthsRemaining} mos)</span>
                             ) : (
                               <span className="text-rose-600 font-semibold">Expired / Near Lapse</span>
@@ -296,42 +314,61 @@ export default function PortfolioPage() {
 
                       {/* Chain of Title & Registered Owner */}
                       <td className="py-4 px-4">
-                        <div className="space-y-1 max-w-[200px]">
-                          <div className="text-[11px] font-semibold text-slate-800 line-clamp-1" title={asset.registeredProprietor}>
-                            {asset.registeredProprietor}
+                        {asset.isNotFoundInEpo ? (
+                          <div className="space-y-1 max-w-[200px]">
+                            <div className="text-[11px] font-bold text-rose-800">
+                              No Matching EPO Record
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-block w-2 h-2 rounded-full bg-rose-500" />
+                              <span className="text-[10px] font-bold text-rose-700">
+                                Not found in EPO Register
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`inline-block w-2 h-2 rounded-full ${
-                                asset.titleMatchPct >= 90
-                                  ? 'bg-emerald-500'
-                                  : asset.titleMatchPct >= 70
-                                  ? 'bg-amber-500'
-                                  : 'bg-rose-500'
-                              }`}
-                            />
-                            <span className="text-[10px] font-bold text-slate-500">
-                              {asset.titleMatchPct}% match to target
-                            </span>
+                        ) : (
+                          <div className="space-y-1 max-w-[200px]">
+                            <div className="text-[11px] font-semibold text-slate-800 line-clamp-1" title={asset.registeredProprietor}>
+                              {asset.registeredProprietor}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`inline-block w-2 h-2 rounded-full ${
+                                  asset.titleMatchPct >= 90
+                                    ? 'bg-emerald-500'
+                                    : asset.titleMatchPct >= 70
+                                    ? 'bg-amber-500'
+                                    : 'bg-rose-500'
+                                }`}
+                              />
+                              <span className="text-[10px] font-bold text-slate-500">
+                                {asset.titleMatchPct}% match to target
+                              </span>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </td>
 
                       {/* Due Diligence Standing Status Pill */}
                       <td className="py-4 px-4 whitespace-nowrap">
-                        {isCritical && (
+                        {asset.isNotFoundInEpo ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-100 text-rose-900 border border-rose-300">
+                            <ShieldAlert className="w-3.5 h-3.5 text-rose-700" />
+                            <span>NOT FOUND IN EPO</span>
+                          </span>
+                        ) : isCritical ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-50 text-rose-800 border border-rose-200">
                             <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
                             <span>CRITICAL RISK</span>
                           </span>
-                        )}
-                        {isWarning && (
+                        ) : null}
+                        {!asset.isNotFoundInEpo && isWarning && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                             <span>WARNING</span>
                           </span>
                         )}
-                        {isClean && (
+                        {!asset.isNotFoundInEpo && isClean && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                             <span>VERIFIED CLEAN</span>
@@ -356,7 +393,7 @@ export default function PortfolioPage() {
                       {/* Action CTA Link */}
                       <td className="py-4 px-4 text-right whitespace-nowrap">
                         <Link
-                          href={`/patent/${asset.id}`}
+                          href={`/patent/${encodeURIComponent(asset.id)}`}
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 group-hover:bg-slate-900 group-hover:text-white text-slate-700 text-xs font-bold transition shadow-2xs"
                         >
                           <span>Review</span>

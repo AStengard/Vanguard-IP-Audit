@@ -270,7 +270,10 @@ export default function LandingPortalPage() {
       if (!res.ok || data.status !== 'OK') {
         if (!isMountedRef.current) return;
         setLiveScan(null);
-        if (data.status === 'MISSING_EPO_CREDENTIALS') {
+        if (
+          data.status === 'MISSING_EPO_CREDENTIALS' ||
+          data.status === 'CREDENTIALS_MISSING_OR_INVALID'
+        ) {
           setApiError({
             title: 'EPO OPS Credentials Required for Live Registry Audits',
             message: data.message || 'EPO Open Patent Services API keys are not configured in your environment.',
@@ -286,18 +289,90 @@ export default function LandingPortalPage() {
         return;
       }
 
-      // Map live EPO audited records to portfolio items
-      const livePatents: SamplePatentRecord[] = (data.auditedRecords || []).map((rec: any, idx: number) => {
+      const buildNotFoundRecord = (rawRef: string, reasonText?: string): SamplePatentRecord => {
+        const cleanId = rawRef.trim() || 'UNMATCHED-REF';
+        const reason =
+          reasonText ||
+          `No matching publication or register record was found in the EPO OPS v3.2 database for "${cleanId}".`;
+        return {
+          id: cleanId,
+          title: 'Patent Number Not Found in EPO Register',
+          applicationNumber: cleanId,
+          ipcClass: 'N/A',
+          filingDate: '',
+          priorityDate: '',
+          grantDate: '',
+          expirationDate: '',
+          registeredProprietor: 'No Matching EPO Record',
+          proprietorAddress: 'Not found in European Patent Register',
+          disclosedOwnerSchedule: cleanTargetName,
+          inventors: [],
+          epoStatus: 'NOT_FOUND_IN_EPO',
+          epoStatusCode: '404 / NOT_FOUND',
+          notFoundInEpo: true,
+          notFoundReason: reason,
+          mismatchCategory: 'NOT_FOUND_IN_EPO',
+          annuityYear: 0,
+          annuityStatus: 'UNVERIFIED',
+          annuityPaidThrough: 'N/A',
+          lastAnnuityPaidDate: 'N/A',
+          nextAnnuityDueDate: 'N/A',
+          nextAnnuityAmountEur: 0,
+          unitaryPatent: false,
+          designatedStates: [],
+          oppositionStatus: 'UNVERIFIED',
+          oppositionDetail: reason,
+          productLine: 'Unverified / Unmatched Disclosure',
+          revenueAttributionPct: 0,
+          baseRiskCategory: 'CRITICAL',
+          legalSummary: reason,
+          spaRemediationClause: `DISCLOSURE VERIFICATION REQUIRED: Patent reference "${cleanId}" did not match any record in the European Patent Register. Require Seller to confirm the correct EP publication/application number or remove from Schedule 3.14 prior to signing.`,
+          cpcClass: 'N/A',
+          inpadocEvents: [
+            {
+              date: new Date().toISOString().slice(0, 10),
+              code: '404',
+              title: 'No matching patent record found in EPO OPS v3.2',
+              ref: cleanId
+            }
+          ],
+          legalEvents: [
+            {
+              eventDate: new Date().toISOString().slice(0, 10),
+              eventCode: '404',
+              eventDescription: 'Patent number did not match any EPO Register or published-data record',
+              eventImpact: reason
+            }
+          ]
+        };
+      };
+
+      // Map live EPO audited records (including any 404/unmatched records) to portfolio items
+      const totalReturnedCount =
+        (data.auditedRecords?.length || 0) + (data.malformedInputs?.length || 0);
+
+      const auditedPatents: SamplePatentRecord[] = (data.auditedRecords || []).map((rec: any, idx: number) => {
         const id = rec.epodoc || rec.docdb || rec.rawInput || `EP-${idx + 1}`;
+        if (rec.notFoundInEpo || rec.registerStatus === 'NOT_FOUND_IN_EPO') {
+          return buildNotFoundRecord(rec.rawInput || id, rec.notFoundReason);
+        }
+
         const owner = rec.applicants?.[0] || 'Unknown Recorded Owner';
         const isMatch = owner.toLowerCase().includes(cleanTargetName.toLowerCase());
         const isOpposed = Boolean(rec.oppositionPending);
+        const isUnitary = Boolean(rec.unitaryPatent);
         const jurisdictions: string[] = Array.isArray(rec.familyJurisdictions) && rec.familyJurisdictions.length > 0
           ? rec.familyJurisdictions
           : ['DE', 'FR', 'GB'];
         const filingDate = rec.filingDate || '2020-01-01';
         const grantDate = rec.grantDate || '2023-01-01';
         const filingYear = parseInt(filingDate.slice(0, 4), 10) || 2020;
+        const mappedStates = jurisdictions.map((code: string) => ({
+          code,
+          status: 'VALIDATED' as const,
+          nationalRef: `${code}${id}`,
+          renewalPaid: true
+        }));
 
         return {
           id,
@@ -313,7 +388,11 @@ export default function LandingPortalPage() {
           disclosedOwnerSchedule: cleanTargetName,
           inventors: Array.isArray(rec.inventors) && rec.inventors.length > 0 ? rec.inventors : ['Recorded Inventor'],
           epoStatus: isOpposed ? 'OPPOSITION_PENDING' : 'GRANTED_ACTIVE',
-          epoStatusCode: isOpposed ? 'PG25 / OPPOSITION' : 'PG25 / REG',
+          epoStatusCode: isOpposed
+            ? 'PG25 / OPPOSITION'
+            : isUnitary
+            ? 'C0 / UNITARY_PATENT'
+            : 'PG25 / REG',
           mismatchCategory: isMatch ? 'PERFECT_MATCH' : 'FOUNDER_PERSONAL_OWNERSHIP',
           annuityYear: Math.max(1, new Date().getFullYear() - filingYear),
           annuityStatus: 'PAID_CURRENT',
@@ -321,21 +400,30 @@ export default function LandingPortalPage() {
           lastAnnuityPaidDate: '2025-01-01',
           nextAnnuityDueDate: '2026-06-30',
           nextAnnuityAmountEur: 980,
-          unitaryPatent: false,
-          designatedStates: jurisdictions.map((code: string) => ({
-            code,
-            status: 'VALIDATED' as const,
-            nationalRef: `${code}${id}`,
-            renewalPaid: true
-          })),
+          unitaryPatent: isUnitary,
+          designatedStates: isUnitary
+            ? [
+                {
+                  code: 'UP',
+                  status: 'UNITARY_PATENT' as const,
+                  nationalRef: `${id}-UP (17 EU States)`,
+                  renewalPaid: true
+                },
+                ...mappedStates
+              ]
+            : mappedStates,
           oppositionStatus: isOpposed ? 'ACTIVE_OPPOSITION_PROCEEDINGS' : 'NO_OPPOSITION_EXPIRED',
           oppositionDetail: isOpposed
             ? 'Active opposition proceeding detected in EPO Register under Art. 99 EPC.'
             : 'No active opposition recorded in EPO Register.',
           productLine: 'Audited Target Patent Portfolio',
-          revenueAttributionPct: Math.round(100 / Math.max((data.auditedRecords || []).length, 1)),
+          revenueAttributionPct: Math.round(100 / Math.max(totalReturnedCount, 1)),
           baseRiskCategory: !isMatch || isOpposed ? 'CRITICAL' : 'CLEAN',
-          legalSummary: `Live EPO OPS registry retrieval for ${id}. Recorded proprietor: ${owner}.`,
+          legalSummary: `Live EPO OPS registry retrieval for ${id}. Recorded proprietor: ${owner}.${
+            isUnitary && rec.unitaryPatentEvidence
+              ? ` Unitary Patent verified (${rec.unitaryPatentEvidence}).`
+              : ''
+          }`,
           spaRemediationClause: !isMatch
             ? `CLOSING CONDITION PRECEDENT: Require executed Art. 72 EPC Confirmatory Deed of Assignment transferring ${id} from ${owner} to ${cleanTargetName} prior to Closing.`
             : `STANDARD WARRANTY SUFFICIENT: Include ${id} under Schedule 3.14(a) subject to Section 3.14 IP ownership representations.`,
@@ -355,8 +443,19 @@ export default function LandingPortalPage() {
         };
       });
 
+      // Also include any malformed/unmatched numbers rejected by EPO Number Service so they are clearly reported
+      const malformedPatents: SamplePatentRecord[] = (data.malformedInputs || []).map((bad: any) =>
+        buildNotFoundRecord(
+          bad.rawInput || 'Unknown Input',
+          bad.error || `Patent number "${bad.rawInput}" was not recognized by the EPO OPS Number Service.`
+        )
+      );
+
+      const livePatents: SamplePatentRecord[] = [...auditedPatents, ...malformedPatents];
+
       // Evaluate actual findings so the scanner reflects true live Flagged / Verified pillar results
       const evaluated = livePatents.map((p) => evaluatePatentAsset(p, cleanTargetName));
+      const notFoundCount = evaluated.filter((a) => a.isNotFoundInEpo).length;
       const liveFlags: LiveScanFlags = {
         chainOfTitleFlagged: evaluated.some((a) =>
           a.checks.some((c) => c.id === 'CHAIN_OF_TITLE' && c.status !== 'CLEAN')
@@ -366,7 +465,8 @@ export default function LandingPortalPage() {
         ),
         oppositionFlagged: evaluated.some((a) =>
           a.checks.some((c) => c.id === 'OPPOSITION_DISPUTE' && c.status !== 'CLEAN')
-        )
+        ),
+        notFoundCount
       };
 
       if (isMountedRef.current) {
@@ -449,7 +549,7 @@ export default function LandingPortalPage() {
             Watch Recruiter Demo — Pre-Configured MedTech M&amp;A Deal
           </h2>
           <p className="text-[11px] text-slate-300 font-serif leading-relaxed">
-            Walk through 4 critical red flags (Art. 72 title breaks, Art. 86 lapse, Art. 99 opposition), Schedule 3.14 &amp; SPA memo — no API keys needed.
+            Walk through 4 critical red flags (Art. 72 title breaks, Art. 86 lapse, Art. 99 opposition), Schedule 3.14 &amp; SPA memo.
           </p>
         </div>
 
@@ -469,11 +569,10 @@ export default function LandingPortalPage() {
       <div className="max-w-3xl mx-auto">
         <div
           id="custom-audit-form-section"
-          className={`bg-white rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-24 transition-all duration-300 ${
-            isFormHighlighted
+          className={`bg-white rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-24 transition-all duration-300 ${isFormHighlighted
               ? 'border-2 border-emerald-500 ring-4 ring-emerald-500/20 shadow-lg'
               : 'border border-slate-200'
-          }`}
+            }`}
         >
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
@@ -521,11 +620,10 @@ export default function LandingPortalPage() {
                   value={customTarget}
                   onChange={(e) => setCustomTarget(e.target.value)}
                   placeholder="e.g. BioNTech SE or Siemens Healthineers AG"
-                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs font-medium focus:outline-none transition ${
-                    isDemoActive && currentStepIndex === 0
+                  className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs font-medium focus:outline-none transition ${isDemoActive && currentStepIndex === 0
                       ? 'bg-emerald-50/20 border-2 border-emerald-500 ring-2 ring-emerald-400/20 text-slate-900 font-bold'
                       : 'bg-slate-50 border border-slate-200 text-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900'
-                  }`}
+                    }`}
                   required
                 />
               </div>
@@ -557,11 +655,10 @@ export default function LandingPortalPage() {
                 value={customPatentText}
                 onChange={(e) => setCustomPatentText(e.target.value)}
                 placeholder="Enter EP numbers (e.g. EP3904118, EP3800201, EP3654120)..."
-                className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono placeholder:text-slate-400 focus:outline-none transition ${
-                  isDemoActive && currentStepIndex === 0
+                className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-mono placeholder:text-slate-400 focus:outline-none transition ${isDemoActive && currentStepIndex === 0
                     ? 'bg-emerald-50/20 border-2 border-emerald-500 ring-2 ring-emerald-400/20 text-slate-900 font-bold'
                     : 'bg-slate-50 border border-slate-200 text-slate-900 focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900'
-                }`}
+                  }`}
                 required
               />
               <span className="text-[11px] text-slate-400 block">
@@ -595,7 +692,7 @@ export default function LandingPortalPage() {
               {isDemoActive && currentStepIndex === 0 && showSyntheticPointer && (
                 <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
                   <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-600 text-white border-2 border-white text-[10px] font-black uppercase tracking-wider shadow-xl whitespace-nowrap">
-                    Triggering 5-Pillar Audit...
+                    Triggering Diligence Audit...
                   </span>
                 </div>
               )}
@@ -603,11 +700,10 @@ export default function LandingPortalPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-extrabold text-xs shadow-xs transition disabled:opacity-50 cursor-pointer relative ${
-                  isDemoActive && currentStepIndex === 0 && showSyntheticPointer
+                className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-extrabold text-xs shadow-xs transition disabled:opacity-50 cursor-pointer relative ${isDemoActive && currentStepIndex === 0 && showSyntheticPointer
                     ? 'bg-slate-900 text-white ring-4 ring-emerald-400 ring-offset-2 ring-offset-white shadow-xl shadow-emerald-500/25 scale-[1.01]'
                     : 'bg-slate-900 hover:bg-slate-800 text-white'
-                }`}
+                  }`}
               >
                 {isSubmitting ? (
                   <>
@@ -616,7 +712,7 @@ export default function LandingPortalPage() {
                   </>
                 ) : (
                   <>
-                    <span>Run Live EPO 5-Pillar Audit</span>
+                    <span>Run Live EPO Diligence Audit</span>
                     <ArrowRight className="w-4 h-4 text-emerald-400" />
                   </>
                 )}
@@ -659,12 +755,12 @@ export default function LandingPortalPage() {
       </div>
 
       {/* =====================================================================
-          4. 3-PILLAR STATUTORY SUMMARY EXPLAINER (Bottom Footer)
+          4. DUE DILIGENCE CHECKS SUMMARY EXPLAINER (Bottom Footer)
       ====================================================================== */}
       <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
           <div className="space-y-1 sm:pr-4">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pillar 1 &amp; 2</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Checks 1 &amp; 2</span>
             <div className="font-bold text-slate-900 text-sm">Chain of Title &amp; Renewal Standing</div>
             <p className="text-slate-600 text-[11px] leading-relaxed font-serif">
               Under EPC Articles 72 &amp; 86, verifies recorded registered proprietors against target corporate entities and tracks 6-month annuity surcharge grace periods.
@@ -672,7 +768,7 @@ export default function LandingPortalPage() {
           </div>
 
           <div className="space-y-1 sm:px-4 pt-4 sm:pt-0">
-            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Pillar 3 &amp; 4</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Checks 3 &amp; 4</span>
             <div className="font-bold text-slate-900 text-sm">Opposition &amp; Unitary Scope</div>
             <p className="text-slate-600 text-[11px] leading-relaxed font-serif">
               Audits Article 99 9-month post-grant opposition challenges and identifies Unitary Patents (17 EU states) versus national classic validations.

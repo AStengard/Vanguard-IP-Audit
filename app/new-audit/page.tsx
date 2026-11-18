@@ -142,7 +142,10 @@ export default function NewAuditPage() {
       if (!res.ok || data.status !== 'OK') {
         if (!isMountedRef.current) return;
         setLiveScan(null);
-        if (data.status === 'MISSING_EPO_CREDENTIALS') {
+        if (
+          data.status === 'MISSING_EPO_CREDENTIALS' ||
+          data.status === 'CREDENTIALS_MISSING_OR_INVALID'
+        ) {
           setLiveError({
             title: 'EPO OPS Credentials Required for Live Registry Audits',
             message: data.message || 'EPO Open Patent Services API keys are not configured in your environment.',
@@ -158,18 +161,90 @@ export default function NewAuditPage() {
         return;
       }
 
-      // Convert audited records to portfolio items
-      const livePatents: SamplePatentRecord[] = (data.auditedRecords || []).map((rec: any, idx: number) => {
+      const buildNotFoundRecord = (rawRef: string, reasonText?: string): SamplePatentRecord => {
+        const cleanId = rawRef.trim() || 'UNMATCHED-REF';
+        const reason =
+          reasonText ||
+          `No matching publication or register record was found in the EPO OPS v3.2 database for "${cleanId}".`;
+        return {
+          id: cleanId,
+          title: 'Patent Number Not Found in EPO Register',
+          applicationNumber: cleanId,
+          ipcClass: 'N/A',
+          filingDate: '',
+          priorityDate: '',
+          grantDate: '',
+          expirationDate: '',
+          registeredProprietor: 'No Matching EPO Record',
+          proprietorAddress: 'Not found in European Patent Register',
+          disclosedOwnerSchedule: cleanLiveTarget,
+          inventors: [],
+          epoStatus: 'NOT_FOUND_IN_EPO',
+          epoStatusCode: '404 / NOT_FOUND',
+          notFoundInEpo: true,
+          notFoundReason: reason,
+          mismatchCategory: 'NOT_FOUND_IN_EPO',
+          annuityYear: 0,
+          annuityStatus: 'UNVERIFIED',
+          annuityPaidThrough: 'N/A',
+          lastAnnuityPaidDate: 'N/A',
+          nextAnnuityDueDate: 'N/A',
+          nextAnnuityAmountEur: 0,
+          unitaryPatent: false,
+          designatedStates: [],
+          oppositionStatus: 'UNVERIFIED',
+          oppositionDetail: reason,
+          productLine: 'Unverified / Unmatched Disclosure',
+          revenueAttributionPct: 0,
+          baseRiskCategory: 'CRITICAL',
+          legalSummary: reason,
+          spaRemediationClause: `DISCLOSURE VERIFICATION REQUIRED: Patent reference "${cleanId}" did not match any record in the European Patent Register. Require Seller to confirm the correct EP publication/application number or remove from Schedule 3.14 prior to signing.`,
+          cpcClass: 'N/A',
+          inpadocEvents: [
+            {
+              date: new Date().toISOString().slice(0, 10),
+              code: '404',
+              title: 'No matching patent record found in EPO OPS v3.2',
+              ref: cleanId
+            }
+          ],
+          legalEvents: [
+            {
+              eventDate: new Date().toISOString().slice(0, 10),
+              eventCode: '404',
+              eventDescription: 'Patent number did not match any EPO Register or published-data record',
+              eventImpact: reason
+            }
+          ]
+        };
+      };
+
+      const totalReturnedCount =
+        (data.auditedRecords?.length || 0) + (data.malformedInputs?.length || 0);
+
+      // Convert audited records (including any 404/unmatched records) to portfolio items
+      const auditedPatents: SamplePatentRecord[] = (data.auditedRecords || []).map((rec: any, idx: number) => {
         const id = rec.epodoc || rec.docdb || rec.rawInput || `EP-${idx + 1}`;
+        if (rec.notFoundInEpo || rec.registerStatus === 'NOT_FOUND_IN_EPO') {
+          return buildNotFoundRecord(rec.rawInput || id, rec.notFoundReason);
+        }
+
         const owner = rec.applicants?.[0] || 'Unknown Recorded Owner';
         const isMatch = owner.toLowerCase().includes(cleanLiveTarget.toLowerCase());
         const isOpposed = Boolean(rec.oppositionPending);
+        const isUnitary = Boolean(rec.unitaryPatent);
         const jurisdictions: string[] = Array.isArray(rec.familyJurisdictions) && rec.familyJurisdictions.length > 0
           ? rec.familyJurisdictions
           : ['DE', 'FR', 'GB'];
         const filingDate = rec.filingDate || '2020-01-01';
         const grantDate = rec.grantDate || '2023-01-01';
         const filingYear = parseInt(filingDate.slice(0, 4), 10) || 2020;
+        const mappedStates = jurisdictions.map((code: string) => ({
+          code,
+          status: 'VALIDATED' as const,
+          nationalRef: `${code}${id}`,
+          renewalPaid: true
+        }));
 
         return {
           id,
@@ -185,7 +260,11 @@ export default function NewAuditPage() {
           disclosedOwnerSchedule: cleanLiveTarget,
           inventors: Array.isArray(rec.inventors) && rec.inventors.length > 0 ? rec.inventors : ['Recorded Inventor'],
           epoStatus: isOpposed ? 'OPPOSITION_PENDING' : 'GRANTED_ACTIVE',
-          epoStatusCode: isOpposed ? 'PG25 / OPPOSITION' : 'PG25 / REG',
+          epoStatusCode: isOpposed
+            ? 'PG25 / OPPOSITION'
+            : isUnitary
+            ? 'C0 / UNITARY_PATENT'
+            : 'PG25 / REG',
           mismatchCategory: isMatch ? 'PERFECT_MATCH' : 'FOUNDER_PERSONAL_OWNERSHIP',
           annuityYear: Math.max(1, new Date().getFullYear() - filingYear),
           annuityStatus: 'PAID_CURRENT',
@@ -193,21 +272,30 @@ export default function NewAuditPage() {
           lastAnnuityPaidDate: '2025-01-01',
           nextAnnuityDueDate: '2026-06-30',
           nextAnnuityAmountEur: 980,
-          unitaryPatent: false,
-          designatedStates: jurisdictions.map((code: string) => ({
-            code,
-            status: 'VALIDATED' as const,
-            nationalRef: `${code}${id}`,
-            renewalPaid: true
-          })),
+          unitaryPatent: isUnitary,
+          designatedStates: isUnitary
+            ? [
+                {
+                  code: 'UP',
+                  status: 'UNITARY_PATENT' as const,
+                  nationalRef: `${id}-UP (17 EU States)`,
+                  renewalPaid: true
+                },
+                ...mappedStates
+              ]
+            : mappedStates,
           oppositionStatus: isOpposed ? 'ACTIVE_OPPOSITION_PROCEEDINGS' : 'NO_OPPOSITION_EXPIRED',
           oppositionDetail: isOpposed
             ? 'Active opposition proceeding detected in EPO Register under Art. 99 EPC.'
             : 'No active opposition recorded in EPO Register.',
           productLine: 'Audited Target Patent Portfolio',
-          revenueAttributionPct: Math.round(100 / Math.max((data.auditedRecords || []).length, 1)),
+          revenueAttributionPct: Math.round(100 / Math.max(totalReturnedCount, 1)),
           baseRiskCategory: !isMatch || isOpposed ? 'CRITICAL' : 'CLEAN',
-          legalSummary: `Live EPO OPS registry retrieval for ${id}. Recorded proprietor: ${owner}.`,
+          legalSummary: `Live EPO OPS registry retrieval for ${id}. Recorded proprietor: ${owner}.${
+            isUnitary && rec.unitaryPatentEvidence
+              ? ` Unitary Patent verified (${rec.unitaryPatentEvidence}).`
+              : ''
+          }`,
           spaRemediationClause: !isMatch
             ? `CLOSING CONDITION PRECEDENT: Require executed Art. 72 EPC Confirmatory Deed of Assignment transferring ${id} from ${owner} to ${cleanLiveTarget} prior to Closing.`
             : `STANDARD WARRANTY SUFFICIENT: Include ${id} under Schedule 3.14(a) subject to Section 3.14 IP ownership representations.`,
@@ -227,7 +315,18 @@ export default function NewAuditPage() {
         };
       });
 
+      // Also include any malformed/unmatched numbers rejected by EPO Number Service so they are clearly reported
+      const malformedPatents: SamplePatentRecord[] = (data.malformedInputs || []).map((bad: any) =>
+        buildNotFoundRecord(
+          bad.rawInput || 'Unknown Input',
+          bad.error || `Patent number "${bad.rawInput}" was not recognized by the EPO OPS Number Service.`
+        )
+      );
+
+      const livePatents: SamplePatentRecord[] = [...auditedPatents, ...malformedPatents];
+
       const evaluated = livePatents.map((p) => evaluatePatentAsset(p, cleanLiveTarget));
+      const notFoundCount = evaluated.filter((a) => a.isNotFoundInEpo).length;
       const liveFlags: LiveScanFlags = {
         chainOfTitleFlagged: evaluated.some((a) =>
           a.checks.some((c) => c.id === 'CHAIN_OF_TITLE' && c.status !== 'CLEAN')
@@ -237,7 +336,8 @@ export default function NewAuditPage() {
         ),
         oppositionFlagged: evaluated.some((a) =>
           a.checks.some((c) => c.id === 'OPPOSITION_DISPUTE' && c.status !== 'CLEAN')
-        )
+        ),
+        notFoundCount
       };
 
       if (isMountedRef.current) {
@@ -442,7 +542,7 @@ export default function NewAuditPage() {
                   </>
                 ) : (
                   <>
-                    <span>Run Statutory Audit</span>
+                    <span>Run Live EPO Diligence Audit</span>
                     <ArrowRight className="w-4 h-4 text-emerald-400" />
                   </>
                 )}
@@ -494,7 +594,7 @@ export default function NewAuditPage() {
                       In your Vercel Project Settings &gt; <strong>Environment Variables</strong>, add:
                       <div className="font-mono text-[11px] bg-slate-100 p-2 rounded mt-1 text-slate-800">
                         EPO_OPS_CONSUMER_KEY = your_key_here<br />
-                        EPO_OPS_CONSUMER_SECRET = your_secret_here
+                        EPO_OPS_SECRET = your_secret_here
                       </div>
                     </li>
                     <li>

@@ -14,6 +14,7 @@ export interface LiveScanFlags {
   chainOfTitleFlagged: boolean;
   maintenanceFlagged: boolean;
   oppositionFlagged: boolean;
+  notFoundCount?: number;
 }
 
 export interface AuditScannerModalProps {
@@ -169,6 +170,7 @@ export default function AuditScannerModal({
     if (check.id === "check-2") return liveFlags.chainOfTitleFlagged ? "warning" : "success";
     if (check.id === "check-3") return liveFlags.maintenanceFlagged ? "warning" : "success";
     if (check.id === "check-4") return liveFlags.oppositionFlagged ? "warning" : "success";
+    if (check.id === "check-5" && (liveFlags.notFoundCount || 0) > 0) return "warning";
     return check.defaultType;
   };
 
@@ -300,7 +302,11 @@ export default function AuditScannerModal({
                           : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                       }`}
                     >
-                      {checkType === "warning" ? "Flagged" : "Verified"}
+                      {check.id === "check-5" && isLiveMode && (liveFlags?.notFoundCount || 0) > 0
+                        ? `${liveFlags?.notFoundCount} Not Found`
+                        : checkType === "warning"
+                        ? "Flagged"
+                        : "Verified"}
                     </span>
                   )}
                 </div>
