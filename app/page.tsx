@@ -69,7 +69,7 @@ export default function LandingPortalPage() {
   // RECRUITER AUTO-DEMO: STEP 1 TYPEWRITER & FORM AUTOMATION
   // --------------------------------------------------------------------------
   useEffect(() => {
-    if (!isDemoActive || currentStepIndex !== 0 || !isPlaying) {
+    if (!isDemoActive || currentStepIndex !== 0) {
       setShowSyntheticPointer(false);
       return;
     }
@@ -126,7 +126,7 @@ export default function LandingPortalPage() {
       isCancelled = true;
       timeouts.forEach((t) => clearTimeout(t));
     };
-  }, [isDemoActive, currentStepIndex, isPlaying, playbackSpeed]);
+  }, [isDemoActive, currentStepIndex, playbackSpeed]);
 
   // Quick helper to fill sample numbers
   const handleInsertSampleNumbers = () => {

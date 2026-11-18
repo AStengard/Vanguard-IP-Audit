@@ -47,8 +47,8 @@ export const DEMO_STEPS: DemoStep[] = [
     id: "step-3-overview",
     stepNumber: 3,
     label: "Step 3/5: Statutory Risk Scorecard",
-    title: "Overview & Red Flag Spotlight",
-    description: "Spotlighting Critical Red Flags: Art. 72 unrecorded assignment & university ownership.",
+    title: "Overview & 4 Critical Red Flags",
+    description: "Spotlighting all 4 Critical Red Flags: Art. 72 title breaks, Art. 99 opposition & Art. 86 statutory lapse.",
     path: "/overview",
     duration: 9,
   },
@@ -153,6 +153,11 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
   }, [currentStepIndex, resetToShowcase, router]);
 
   const prevStep = useCallback(() => {
+    if (isCompleted) {
+      setIsCompleted(false);
+      setElapsedTime(0);
+      return;
+    }
     if (currentStepIndex > 0) {
       const prevIdx = currentStepIndex - 1;
       setCurrentStepIndex(prevIdx);
@@ -160,7 +165,7 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
       setIsCompleted(false);
       router.push(DEMO_STEPS[prevIdx].path);
     }
-  }, [currentStepIndex, router]);
+  }, [currentStepIndex, isCompleted, router]);
 
   const pauseDemo = useCallback(() => {
     setIsPlaying(false);
@@ -181,12 +186,12 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
     // 1. Ensure showcase data is freshly loaded with all 12 assets
     resetToShowcase();
 
-    // 2. Initialize demo state to Step 1
+    // 2. Initialize demo state to Step 1 (paused by default for self-paced walkthrough)
     setCurrentStepIndex(0);
     setElapsedTime(0);
     setIsCompleted(false);
     setIsDemoActive(true);
-    setIsPlaying(true);
+    setIsPlaying(false);
 
     // 3. Navigate to initial target path
     router.push(DEMO_STEPS[0].path);

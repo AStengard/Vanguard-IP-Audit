@@ -19,6 +19,7 @@ interface StepNarration {
   icon: React.ElementType;
   title: string;
   body: string;
+  bullets?: string[];
   dealImpact: string;
 }
 
@@ -40,12 +41,18 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
     dealImpact: "Manual patent register inspection across 39 member states takes days. Vanguard's statutory engine parses legal status and INPADOC legal events in seconds.",
   },
   2: {
-    tag: "Art. 72 EPC Title Break",
+    tag: "4 Critical Red Flags",
     tagColor: "bg-rose-500/20 text-rose-300 border-rose-500/30",
     icon: ShieldAlert,
-    title: "Critical Red Flag: Unrecorded Transfer",
-    body: "The engine flags EP3491024B1: recorded proprietor is 'Charité – Universitätsmedizin Berlin', NOT the target company! Under Art. 72 EPC, any assignment without an executed written deed is void.",
-    dealImpact: "Closing Condition Precedent (CP § 7.02(f)): Vanguard automatically drafts a mandatory covenant requiring an executed Confirmatory Assignment Deed prior to deal closing.",
+    title: "4 Distinct Critical Red Flags Detected",
+    body: "Across the 12-asset portfolio, the statutory engine surfaces 4 critical deal blockers (plus material warnings) that cannot close on standard warranties:",
+    bullets: [
+      "EP3491024B1 — Unrecorded university transfer (Charité Berlin, Art. 72 EPC)",
+      "EP3589102B1 — Active post-grant opposition proceedings (Art. 99 EPC)",
+      "EP3305198B1 — Statutory lapse from unpaid renewal fees (Art. 86 EPC)",
+      "EP3618440B1 — Founder personal ownership (Dr. Lukas Vance, Art. 72 EPC)",
+    ],
+    dealImpact: "Each flag triggers its own tailored SPA safeguard: Confirmatory Assignment CPs for title breaks, a Special Escrow Holdback & Indemnity for active opposition, and a purchase price cut for the lapsed patent.",
   },
   3: {
     tag: "Schedule 3.14 Table",
@@ -149,6 +156,20 @@ export default function DemoNarratorBox() {
             <p className="text-[11px] text-slate-300 leading-relaxed font-serif">
               {narration.body}
             </p>
+
+            {/* Optional multi-flag breakdown list */}
+            {narration.bullets && narration.bullets.length > 0 && (
+              <ul className="space-y-1.5 text-[11px] text-slate-200 font-sans bg-slate-800/60 border border-slate-700/70 rounded-xl p-2.5">
+                {narration.bullets.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2 leading-snug">
+                    <span className="text-rose-400 font-mono font-bold shrink-0">
+                      {idx + 1}.
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             {/* Why this matters / Deal Impact Box */}
             <div className="p-2.5 rounded-xl bg-slate-800/80 border border-slate-700/80 space-y-1">

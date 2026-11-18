@@ -28,7 +28,7 @@ export default function DemoCompletionModal() {
   if (!isDemoActive || !isCompleted) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in zoom-in-95 duration-200">
       {/* Background Decorative Radial Glows */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -74,7 +74,7 @@ export default function DemoCompletionModal() {
             <strong className="text-white font-sans block mb-0.5">
               Executive Findings Summary:
             </strong>
-            1 Chain-of-Title Break flagged • 1 Statutory Lapse detected • SPA Indemnity Schedule Generated
+            4 Critical Red Flags detected (2 Art. 72 Title Breaks • 1 Art. 99 Opposition • 1 Art. 86 Statutory Lapse) • SPA Indemnity Schedule Generated
           </div>
         </div>
 

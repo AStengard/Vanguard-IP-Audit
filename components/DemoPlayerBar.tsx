@@ -4,9 +4,7 @@ import React from "react";
 import {
   Play,
   Pause,
-  SkipForward,
   X,
-  Sparkles,
   RotateCcw,
   FastForward,
 } from "lucide-react";
@@ -25,6 +23,7 @@ export default function DemoPlayerBar() {
     isCompleted,
     pauseDemo,
     resumeDemo,
+    prevStep,
     nextStep,
     exitDemo,
     togglePlaybackSpeed,
@@ -34,8 +33,11 @@ export default function DemoPlayerBar() {
   // Don't render anything if demo mode is inactive
   if (!isDemoActive) return null;
 
+  const isFirstStep = currentStepIndex === 0 && !isCompleted;
+  const isLastStep = currentStepIndex === steps.length - 1 && !isCompleted;
+
   return (
-    <div className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[96%] sm:w-auto sm:min-w-[580px] max-w-2xl bg-slate-900/95 text-white backdrop-blur shadow-2xl rounded-2xl border border-slate-700/80 p-2.5 sm:px-5 sm:py-3.5 flex flex-col gap-2 sm:gap-2.5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 print:hidden">
+    <div className="fixed bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[96%] sm:w-auto sm:min-w-[600px] max-w-2xl bg-slate-900/95 text-white backdrop-blur shadow-2xl rounded-2xl border border-slate-700/80 p-2.5 sm:px-5 sm:py-3.5 flex flex-col gap-2 sm:gap-2.5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5 print:hidden">
       {/* ===================================================================
           TOP ROW: STEP INFO & PLAYBACK CONTROLS
       ==================================================================== */}
@@ -97,8 +99,8 @@ export default function DemoPlayerBar() {
               isCompleted
                 ? "Restart demo from beginning"
                 : isPlaying
-                ? "Pause demo (Space)"
-                : "Resume demo"
+                ? "Pause auto-advance"
+                : "Play auto-advance"
             }
           >
             {isCompleted ? (
@@ -110,16 +112,26 @@ export default function DemoPlayerBar() {
             )}
           </button>
 
-          {/* Skip Step Button */}
+          {/* Back Step Button */}
+          <button
+            type="button"
+            onClick={prevStep}
+            disabled={isFirstStep}
+            className="inline-flex items-center justify-center h-7 sm:h-8 px-2.5 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-[11px] sm:text-xs font-bold text-slate-200 hover:text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            title="Go to previous step"
+          >
+            <span>Back</span>
+          </button>
+
+          {/* Forward Step Button */}
           <button
             type="button"
             onClick={nextStep}
             disabled={isCompleted}
-            className="inline-flex items-center gap-1 h-7 sm:h-8 px-2 sm:px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-[11px] sm:text-xs font-semibold text-slate-200 hover:text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-            title="Skip to next step"
+            className="inline-flex items-center justify-center h-7 sm:h-8 px-2.5 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-[11px] sm:text-xs font-bold text-slate-200 hover:text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            title={isLastStep ? "Finish demo" : "Go to next step"}
           >
-            <span className="hidden sm:inline">Skip Step</span>
-            <SkipForward className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 group-hover:text-white" />
+            <span>{isLastStep ? "Finish" : "Next"}</span>
           </button>
 
           {/* Exit Demo Close Icon (X) */}
@@ -145,7 +157,7 @@ export default function DemoPlayerBar() {
             if (isCompleted || idx < currentStepIndex) {
               width = "100%";
             } else if (idx === currentStepIndex) {
-              width = `${stepProgress}%`;
+              width = !isPlaying && stepProgress === 0 ? "100%" : `${stepProgress}%`;
             }
 
             const isCurrent = idx === currentStepIndex && !isCompleted;
@@ -155,13 +167,17 @@ export default function DemoPlayerBar() {
                 key={step.id}
                 type="button"
                 onClick={() => jumpToStep(idx)}
-                className="flex-1 h-1.5 bg-slate-800 hover:bg-slate-700 rounded-full overflow-hidden transition-all duration-150 cursor-pointer relative group/step focus:outline-none"
+                className={`flex-1 h-1.5 bg-slate-800 hover:bg-slate-700 rounded-full overflow-hidden transition-all duration-150 cursor-pointer relative group/step focus:outline-none ${
+                  isCurrent && !isPlaying ? "ring-1 ring-amber-400/50" : ""
+                }`}
                 title={`${step.label}: ${step.title} (Click to jump)`}
               >
                 <div
                   className={`h-full rounded-full transition-all duration-100 ${
                     isCurrent
-                      ? "bg-gradient-to-r from-emerald-500 to-teal-300"
+                      ? isPlaying
+                        ? "bg-gradient-to-r from-emerald-500 to-teal-300"
+                        : "bg-amber-400/80"
                       : "bg-emerald-500/80"
                   }`}
                   style={{ width }}
@@ -177,11 +193,13 @@ export default function DemoPlayerBar() {
             <span>
               {isCompleted
                 ? "Tour Completed"
+                : !isPlaying
+                ? `Paused — Step ${currentStepIndex + 1} of ${steps.length}`
                 : `${Math.round(elapsedTime)}s / ${currentStep.duration}s`}
             </span>
             <span className="text-slate-600">•</span>
             <span className="hidden sm:inline text-slate-500">
-              Click any bar segment to jump
+              Use Back / Next or press Play
             </span>
           </div>
           <div className="flex items-center gap-1 text-slate-500">

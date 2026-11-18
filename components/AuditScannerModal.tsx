@@ -59,22 +59,48 @@ const SCANNER_CHECKS: ScannerCheck[] = [
 ];
 
 export default function AuditScannerModal() {
-  const { isDemoActive, currentStepIndex, playbackSpeed, isPlaying, elapsedTime } =
+  const { isDemoActive, currentStepIndex, playbackSpeed, elapsedTime } =
     useRecruiterDemo();
 
   const [activeChecks, setActiveChecks] = useState<Record<string, "pending" | "running" | "done">>({});
+  const [localElapsedSec, setLocalElapsedSec] = useState<number>(0);
 
   // Only render when demo is active and at Step 2 (Scanner step)
   const isVisible = isDemoActive && currentStepIndex === 1;
+  const totalDuration = 8.0;
 
-  // Track progress and update check statuses dynamically based on elapsedTime and playbackSpeed
+  // Run a local visual scan progression so Step 2 still animates smoothly even when auto-advance is paused
+  useEffect(() => {
+    if (!isVisible) {
+      setLocalElapsedSec(0);
+      return;
+    }
+
+    const tickMs = 100;
+    const deltaSec = (tickMs / 1000) * playbackSpeed;
+    const interval = setInterval(() => {
+      setLocalElapsedSec((prev) => {
+        if (prev >= totalDuration) {
+          clearInterval(interval);
+          return totalDuration;
+        }
+        return Math.min(totalDuration, prev + deltaSec);
+      });
+    }, tickMs);
+
+    return () => clearInterval(interval);
+  }, [isVisible, playbackSpeed]);
+
+  const effectiveElapsedSec = Math.max(elapsedTime, localElapsedSec);
+
+  // Track progress and update check statuses dynamically
   useEffect(() => {
     if (!isVisible) {
       setActiveChecks({});
       return;
     }
 
-    const effectiveElapsedMs = elapsedTime * 1000;
+    const effectiveElapsedMs = effectiveElapsedSec * 1000;
 
     const newStatuses: Record<string, "pending" | "running" | "done"> = {};
 
@@ -92,17 +118,16 @@ export default function AuditScannerModal() {
     });
 
     setActiveChecks(newStatuses);
-  }, [isVisible, elapsedTime]);
+  }, [isVisible, effectiveElapsedSec]);
 
   if (!isVisible) return null;
 
-  const totalDuration = 8.0;
-  const progressPct = Math.min(100, Math.round((elapsedTime / totalDuration) * 100));
+  const progressPct = Math.min(100, Math.round((effectiveElapsedSec / totalDuration) * 100));
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 pb-28 sm:pb-32 animate-in fade-in duration-200">
       {/* Modal Container */}
-      <div className="relative w-full max-w-xl max-h-[92vh] overflow-y-auto bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-8 text-white shadow-2xl space-y-6">
+      <div className="relative w-full max-w-xl max-h-[82vh] overflow-y-auto bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-8 text-white shadow-2xl space-y-6">
         {/* Animated Scanning Laser Line */}
         <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-pulse" />
 

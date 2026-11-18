@@ -254,14 +254,19 @@ export default function OverviewPage() {
       <div id="demo-critical-flags-section" className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <h2 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-rose-600" />
                 <span>Priority Red Flags Requiring M&amp;A Remediation</span>
               </h2>
+              {criticalAssets.length > 0 && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                  {criticalAssets.length} Critical {criticalAssets.length === 1 ? 'Flag' : 'Flags'}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              These items cannot be closed on standard representations and require specific contractual safeguards.
+              These {criticalAssets.length} items cannot be closed on standard representations and each requires a specific contractual safeguard.
             </p>
           </div>
           <Link
@@ -282,87 +287,87 @@ export default function OverviewPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {criticalAssets.map((asset, idx) => {
-              const isFirst = idx === 0;
+          <DemoSpotlight
+            stepIndex={2}
+            badgeText={`${criticalAssets.length} Critical Red Flags Flagged`}
+            badgeSubtext="Art. 72 Title Breaks, Art. 99 Opposition & Art. 86 Lapse"
+            variant="rose"
+            badgePosition="top-left"
+            pulse={false}
+            className="p-2 sm:p-3"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {criticalAssets.map((asset, idx) => {
+                const criticalCheck =
+                  asset.checks.find((c) => c.status === 'CRITICAL') || asset.checks[0];
 
-              const cardBody = (
-                <div
-                  className={`bg-white rounded-2xl p-5 shadow-xs flex flex-col justify-between transition-all duration-500 h-full ${
-                    isFirst && isDemoActive && currentStepIndex === 2
-                      ? 'border border-rose-300 bg-gradient-to-b from-rose-50/30 to-white'
-                      : 'border border-rose-200 hover:border-rose-300'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-sm font-extrabold text-slate-900">
-                        {asset.id}
-                      </span>
-                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                        Critical Red Flag
-                      </span>
-                    </div>
+                return (
+                  <div
+                    key={asset.id}
+                    className={`bg-white rounded-2xl p-5 shadow-xs flex flex-col justify-between transition-all duration-500 h-full ${
+                      isDemoActive && currentStepIndex === 2
+                        ? 'border-2 border-rose-300 bg-gradient-to-b from-rose-50/40 to-white'
+                        : 'border border-rose-200 hover:border-rose-300'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-extrabold text-slate-900">
+                            {asset.id}
+                          </span>
+                          <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                            Flag {idx + 1} of {criticalAssets.length}
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
+                          {criticalCheck?.citation || 'Critical Red Flag'}
+                        </span>
+                      </div>
 
-                    <div>
-                      <h3 className="font-bold text-xs text-slate-900 line-clamp-1">
-                        {asset.title}
-                      </h3>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        Recorded Owner: <strong>{asset.registeredProprietor}</strong>
+                      <div>
+                        <h3 className="font-bold text-xs text-slate-900 line-clamp-1">
+                          {asset.title}
+                        </h3>
+                        <div className="text-[11px] text-slate-500 mt-0.5">
+                          Recorded Owner: <strong>{asset.registeredProprietor}</strong>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-100 space-y-1">
+                        <span className="text-[11px] font-bold text-rose-900 block">
+                          {asset.primaryIssue}
+                        </span>
+                        <span className="text-[11px] text-rose-800 block leading-relaxed">
+                          {criticalCheck?.lawyerNote ||
+                            `Statutory defect flagged for ${asset.id}.`}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                          Recommended SPA Remedy:
+                        </span>
+                        <span className="text-xs font-semibold text-slate-800 block">
+                          {asset.recommendedAction}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-100 space-y-1">
-                      <span className="text-[11px] font-bold text-rose-900 block">
-                        {asset.primaryIssue}
-                      </span>
-                      <span className="text-[11px] text-rose-800 block leading-relaxed">
-                        Registered to <em>&quot;{asset.registeredProprietor}&quot;</em> rather than target.
-                      </span>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                        Recommended SPA Remedy:
-                      </span>
-                      <span className="text-xs font-semibold text-slate-800 block">
-                        {asset.recommendedAction}
-                      </span>
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end">
+                      <Link
+                        href={`/patent/${asset.id}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-emerald-700 transition"
+                      >
+                        <span>Review Dossier &amp; SPA Clause</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="pt-4 mt-4 border-t border-slate-100 flex justify-end">
-                    <Link
-                      href={`/patent/${asset.id}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-emerald-700 transition"
-                    >
-                      <span>Review Dossier &amp; SPA Clause</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              );
-
-              if (isFirst) {
-                return (
-                  <DemoSpotlight
-                    key={asset.id}
-                    stepIndex={2}
-                    badgeText="Art. 72 EPC Title Break"
-                    badgeSubtext="Unrecorded university transfer requires Closing CP"
-                    variant="rose"
-                    badgePosition="top-left"
-                    className="h-full"
-                  >
-                    {cardBody}
-                  </DemoSpotlight>
                 );
-              }
-
-              return <div key={asset.id}>{cardBody}</div>;
-            })}
-          </div>
+              })}
+            </div>
+          </DemoSpotlight>
         )}
       </div>
 
