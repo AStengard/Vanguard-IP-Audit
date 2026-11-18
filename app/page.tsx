@@ -614,7 +614,7 @@ export default function LandingPortalPage() {
                   Target Company Legal Entity
                 </label>
                 {isDemoActive && currentStepIndex === 0 && (
-                  <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 animate-pulse">
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                     Auto-Typing Target...
                   </span>
                 )}
@@ -643,7 +643,7 @@ export default function LandingPortalPage() {
                   European Patent Asset Numbers
                 </label>
                 {isDemoActive && currentStepIndex === 0 ? (
-                  <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 animate-pulse">
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                     Auto-Filling Schedule...
                   </span>
                 ) : (
@@ -708,7 +708,7 @@ export default function LandingPortalPage() {
                 type="submit"
                 disabled={isSubmitting}
                 className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-extrabold text-xs shadow-xs transition disabled:opacity-50 cursor-pointer relative ${isDemoActive && currentStepIndex === 0 && showSyntheticPointer
-                    ? 'bg-slate-900 text-white ring-4 ring-emerald-400 ring-offset-2 ring-offset-white shadow-xl shadow-emerald-500/25 scale-[1.01]'
+                    ? 'bg-slate-900 text-white ring-2 ring-emerald-500 shadow-sm'
                     : 'bg-slate-900 hover:bg-slate-800 text-white'
                   }`}
               >

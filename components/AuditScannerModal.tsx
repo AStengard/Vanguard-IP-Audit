@@ -202,8 +202,8 @@ export default function AuditScannerModal({
     >
       {/* Modal Container */}
       <div className="relative w-full max-w-xl max-h-[82vh] overflow-y-auto bg-slate-900 border border-slate-700/80 rounded-3xl p-5 sm:p-8 text-white shadow-2xl space-y-6">
-        {/* Animated Scanning Laser Line */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent animate-pulse" />
+        {/* Scanning Laser Line */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent" />
 
         {/* Modal Header */}
         <div className="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
@@ -343,9 +343,9 @@ export default function AuditScannerModal({
               <button
                 type="button"
                 onClick={nextStep}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all duration-300 cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition cursor-pointer ${
                   isStepReady
-                    ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs ring-1 ring-emerald-400 animate-pulse"
+                    ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs"
                     : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
                 }`}
                 title="Proceed to Step 3 (Overview)"
