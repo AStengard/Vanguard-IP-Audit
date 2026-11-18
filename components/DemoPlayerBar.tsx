@@ -22,6 +22,7 @@ export default function DemoPlayerBar() {
     currentStep,
     stepProgress,
     isCompleted,
+    isStepReady,
     pauseDemo,
     resumeDemo,
     prevStep,
@@ -128,20 +129,20 @@ export default function DemoPlayerBar() {
             <span>Back</span>
           </button>
 
-          {/* Forward Step Button (Hero highlighted when paused so recruiters know what to click next) */}
+          {/* Forward Step Button (Only glows green when the scene/step is done) */}
           <button
             type="button"
             onClick={nextStep}
             disabled={isCompleted}
-            className={`inline-flex items-center justify-center gap-1.5 h-7 sm:h-8 px-3 sm:px-4 rounded-xl font-black text-[11px] sm:text-xs transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${
-              !isCompleted && !isPlaying
-                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 animate-pulse hover:animate-none scale-[1.02]"
-                : "bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white"
+            className={`inline-flex items-center justify-center gap-1.5 h-7 sm:h-8 px-3 sm:px-4 rounded-xl font-black text-[11px] sm:text-xs transition-all duration-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${
+              isStepReady && !isCompleted
+                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 animate-pulse hover:animate-none scale-[1.02]"
+                : "bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white"
             }`}
             title={isLastStep ? "Finish demo" : "Go to next step"}
           >
             <span>{isLastStep ? "Finish" : "Next"}</span>
-            <ArrowRight className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+            <ArrowRight className={`w-3.5 h-3.5 shrink-0 stroke-[2.5] ${isStepReady ? "text-slate-950" : "text-slate-400"}`} />
           </button>
 
           {/* Exit Demo Close Icon (X) */}

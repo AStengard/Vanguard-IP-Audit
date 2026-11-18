@@ -91,7 +91,7 @@ export default function AuditScannerModal({
   modeBadge,
   footerTag,
 }: AuditScannerModalProps = {}) {
-  const { isDemoActive, currentStepIndex, playbackSpeed, elapsedTime, nextStep } =
+  const { isDemoActive, currentStepIndex, playbackSpeed, elapsedTime, nextStep, isStepReady, setIsStepReady } =
     useRecruiterDemo();
 
   const [activeChecks, setActiveChecks] = useState<Record<string, "pending" | "running" | "done">>({});
@@ -136,16 +136,17 @@ export default function AuditScannerModal({
     }
   }, [isLiveMode, isVisible, isApiReady, localElapsedSec, holdCapSec]);
 
-  // In demo mode: once the 8s statutory scan finishes, smoothly proceed to Step 3 (Overview)
+  // In demo mode: once the 8s statutory scan finishes, mark ready and smoothly proceed to Step 3 (Overview)
   useEffect(() => {
     if (isLiveMode || !isVisible) return;
     if (localElapsedSec >= totalDuration) {
+      setIsStepReady(true);
       const timer = setTimeout(() => {
         nextStep();
-      }, 750);
+      }, 850);
       return () => clearTimeout(timer);
     }
-  }, [isLiveMode, isVisible, localElapsedSec, totalDuration, nextStep]);
+  }, [isLiveMode, isVisible, localElapsedSec, totalDuration, nextStep, setIsStepReady]);
 
   const effectiveElapsedSec = isLiveMode
     ? localElapsedSec
@@ -342,11 +343,15 @@ export default function AuditScannerModal({
               <button
                 type="button"
                 onClick={nextStep}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black shadow-xs transition cursor-pointer"
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all duration-300 cursor-pointer ${
+                  isStepReady
+                    ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs ring-1 ring-emerald-400 animate-pulse"
+                    : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                }`}
                 title="Proceed to Step 3 (Overview)"
               >
                 <span>Next</span>
-                <ArrowRight className="w-3 h-3 stroke-[2.5]" />
+                <ArrowRight className={`w-3 h-3 stroke-[2.5] ${isStepReady ? "text-slate-950" : "text-slate-400"}`} />
               </button>
             )}
             <span className="text-slate-500 font-mono text-[10px]">

@@ -86,6 +86,8 @@ export interface RecruiterDemoContextType {
   stepProgress: number; // 0 to 100% of current step
   overallProgress: number; // 0 to 100% of total tour
   isCompleted: boolean;
+  isStepReady: boolean;
+  setIsStepReady: (ready: boolean) => void;
   startDemo: () => void;
   pauseDemo: () => void;
   resumeDemo: () => void;
@@ -112,6 +114,7 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
   const [playbackSpeed, setPlaybackSpeedState] = useState<1 | 2>(1);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [isStepReady, setIsStepReady] = useState<boolean>(false);
 
   const currentStep = DEMO_STEPS[currentStepIndex] || DEMO_STEPS[0];
 
@@ -122,6 +125,7 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
     setCurrentStepIndex(0);
     setElapsedTime(0);
     setIsCompleted(false);
+    setIsStepReady(false);
   }, []);
 
   const jumpToStep = useCallback((index: number) => {
@@ -129,11 +133,13 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
       setCurrentStepIndex(index);
       setElapsedTime(0);
       setIsCompleted(false);
+      setIsStepReady(false);
       router.push(DEMO_STEPS[index].path);
     }
   }, [router]);
 
   const nextStep = useCallback(() => {
+    setIsStepReady(false);
     if (currentStepIndex < DEMO_STEPS.length - 1) {
       const nextIdx = currentStepIndex + 1;
       if (nextIdx === 2) {
@@ -153,6 +159,7 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
   }, [currentStepIndex, resetToShowcase, router]);
 
   const prevStep = useCallback(() => {
+    setIsStepReady(false);
     if (isCompleted) {
       setIsCompleted(false);
       setElapsedTime(0);
@@ -177,6 +184,7 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
       setCurrentStepIndex(0);
       setElapsedTime(0);
       setIsCompleted(false);
+      setIsStepReady(false);
       router.push(DEMO_STEPS[0].path);
     }
     setIsPlaying(true);
@@ -190,6 +198,7 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
     setCurrentStepIndex(0);
     setElapsedTime(0);
     setIsCompleted(false);
+    setIsStepReady(false);
     setIsDemoActive(true);
     setIsPlaying(false);
 
@@ -222,6 +231,29 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isDemoActive, exitDemo]);
+
+  // --------------------------------------------------------------------------
+  // SCENE COMPLETION & READINESS ENGINE
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    if (!isDemoActive || isCompleted) {
+      setIsStepReady(false);
+      return;
+    }
+
+    // Reset readiness on step transition
+    setIsStepReady(false);
+
+    // Steps >= 2 (Overview, Portfolio, Memo) become ready after the user has had time
+    // to view the spotlighted cards/tables (~2.8s - 3.2s)
+    if (currentStepIndex >= 2) {
+      const readingDelayMs = (currentStepIndex === 4 ? 3200 : 2800) / playbackSpeed;
+      const timer = setTimeout(() => {
+        setIsStepReady(true);
+      }, readingDelayMs);
+      return () => clearTimeout(timer);
+    }
+  }, [isDemoActive, currentStepIndex, playbackSpeed, isCompleted]);
 
   // --------------------------------------------------------------------------
   // TIMER & PROGRESSION ENGINE
@@ -298,6 +330,8 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
       stepProgress,
       overallProgress,
       isCompleted,
+      isStepReady,
+      setIsStepReady,
       startDemo,
       pauseDemo,
       resumeDemo,
@@ -318,6 +352,8 @@ export function RecruiterDemoProvider({ children }: { children: React.ReactNode 
       stepProgress,
       overallProgress,
       isCompleted,
+      isStepReady,
+      setIsStepReady,
       startDemo,
       pauseDemo,
       resumeDemo,

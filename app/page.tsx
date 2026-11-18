@@ -35,7 +35,7 @@ import { SamplePatentRecord, SAMPLE_MA_PATENTS } from '@/lib/sampleDeal';
 
 export default function LandingPortalPage() {
   const router = useRouter();
-  const { isDemoActive, currentStepIndex, playbackSpeed, isPlaying, startDemo, nextStep } =
+  const { isDemoActive, currentStepIndex, playbackSpeed, isPlaying, startDemo, nextStep, setIsStepReady } =
     useRecruiterDemo();
   const {
     targetCompany,
@@ -194,13 +194,14 @@ export default function LandingPortalPage() {
       timeouts.push(t);
     }
 
-    // 3. Display animated synthetic pointer on the audit button
+    // 3. Display animated synthetic pointer on the audit button and signal step readiness
     const pointerDisplayTime =
       startPatentTypingTime + PATENTS_SCHEDULE.length * patentCharDelay + 400 / playbackSpeed;
 
     const pointerTimeout = setTimeout(() => {
       if (!isCancelled) {
         setShowSyntheticPointer(true);
+        setIsStepReady(true);
       }
     }, pointerDisplayTime);
     timeouts.push(pointerTimeout);

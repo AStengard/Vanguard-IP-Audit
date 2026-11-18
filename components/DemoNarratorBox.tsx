@@ -74,7 +74,7 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
 };
 
 export default function DemoNarratorBox() {
-  const { isDemoActive, currentStepIndex, isCompleted, nextStep } = useRecruiterDemo();
+  const { isDemoActive, currentStepIndex, isCompleted, nextStep, isStepReady } = useRecruiterDemo();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   // Only display when demo is active and before the final completion celebration card
@@ -116,11 +116,15 @@ export default function DemoNarratorBox() {
             <button
               type="button"
               onClick={nextStep}
-              className="inline-flex items-center gap-1 h-6 px-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black shadow-xs transition cursor-pointer shrink-0"
+              className={`inline-flex items-center gap-1 h-6 px-2.5 rounded-lg text-[10px] font-black transition-all duration-300 cursor-pointer shrink-0 ${
+                isStepReady
+                  ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs ring-1 ring-emerald-400/80 animate-pulse hover:animate-none"
+                  : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+              }`}
               title={isLastStep ? "Finish demo" : "Go to next step"}
             >
               <span>{isLastStep ? "Finish" : "Next"}</span>
-              <ArrowRight className="w-3 h-3 stroke-[2.5]" />
+              <ArrowRight className={`w-3 h-3 stroke-[2.5] ${isStepReady ? "text-slate-950" : "text-slate-400"}`} />
             </button>
 
             {/* Collapse / Expand Toggle */}
