@@ -26,7 +26,9 @@ import { useDeal, evaluatePatentAsset } from '@/components/DealContext';
 import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
 import DemoSpotlight from '@/components/DemoSpotlight';
 import AuditScannerModal, {
+  SCANNER_LIVE_HOLD_MS,
   SCANNER_MIN_DURATION_MS,
+  SCANNER_POST_API_MIN_MS,
   LiveScanFlags
 } from '@/components/AuditScannerModal';
 import { SamplePatentRecord, SAMPLE_MA_PATENTS } from '@/lib/sampleDeal';
@@ -477,10 +479,14 @@ export default function LandingPortalPage() {
         );
       }
 
-      // Ensure the scanner always runs at least as long as the demo (8s) before moving to /overview
+      // Allow each remaining checkpoint (Checks 2-5) to reveal Verified/Flagged sequentially
+      // and ensure the scanner always runs at least as long as the demo (8s) before moving to /overview
       const elapsedMs = Date.now() - scanStartTime;
-      const remainingMs = Math.max(0, SCANNER_MIN_DURATION_MS - elapsedMs);
-      await new Promise((resolve) => setTimeout(resolve, remainingMs > 0 ? remainingMs : 600));
+      const remainingToMinMs = Math.max(0, SCANNER_MIN_DURATION_MS - elapsedMs);
+      const postApiRevealMs = elapsedMs >= SCANNER_LIVE_HOLD_MS ? SCANNER_POST_API_MIN_MS : 0;
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.max(remainingToMinMs, postApiRevealMs, 600))
+      );
 
       if (!isMountedRef.current) return;
 

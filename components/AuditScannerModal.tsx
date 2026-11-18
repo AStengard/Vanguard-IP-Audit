@@ -9,6 +9,8 @@ import {
 import { useRecruiterDemo } from "./RecruiterDemoContext";
 
 export const SCANNER_MIN_DURATION_MS = 8000;
+export const SCANNER_LIVE_HOLD_MS = 2200;
+export const SCANNER_POST_API_MIN_MS = 4400;
 
 export interface LiveScanFlags {
   chainOfTitleFlagged: boolean;
@@ -93,16 +95,21 @@ export default function AuditScannerModal({
 
   const [activeChecks, setActiveChecks] = useState<Record<string, "pending" | "running" | "done">>({});
   const [localElapsedSec, setLocalElapsedSec] = useState<number>(0);
+  const [didWaitForApi, setDidWaitForApi] = useState<boolean>(false);
 
   const isLiveMode = isOpen !== undefined;
   const isVisible = isLiveMode ? Boolean(isOpen) : isDemoActive && currentStepIndex === 1;
   const totalDuration = SCANNER_MIN_DURATION_MS / 1000;
-  const effectiveSpeed = isLiveMode ? 1 : playbackSpeed;
+  const holdCapSec = SCANNER_LIVE_HOLD_MS / 1000;
+  // Once the live API finishes after holding on Check 2, step smoothly through Checks 2–5 at 1.4x
+  // so every checkpoint reveals Verified/Flagged one by one in ~4.1s without bunching at the end
+  const effectiveSpeed = isLiveMode ? (didWaitForApi && isApiReady ? 1.4 : 1) : playbackSpeed;
 
-  // Run a local visual scan progression so Step 2 animates when paused and live audits run at least 8s
+  // Run a local visual scan progression so Step 2 animates when paused and live audits reveal step-by-step
   useEffect(() => {
     if (!isVisible) {
       setLocalElapsedSec(0);
+      setDidWaitForApi(false);
       return;
     }
 
@@ -110,7 +117,7 @@ export default function AuditScannerModal({
     const deltaSec = (tickMs / 1000) * effectiveSpeed;
     const interval = setInterval(() => {
       setLocalElapsedSec((prev) => {
-        const cap = isLiveMode && !isApiReady ? totalDuration * 0.92 : totalDuration;
+        const cap = isLiveMode && !isApiReady ? holdCapSec : totalDuration;
         if (prev >= cap) {
           return prev;
         }
@@ -119,20 +126,20 @@ export default function AuditScannerModal({
     }, tickMs);
 
     return () => clearInterval(interval);
-  }, [isVisible, effectiveSpeed, isLiveMode, isApiReady, totalDuration]);
+  }, [isVisible, effectiveSpeed, isLiveMode, isApiReady, totalDuration, holdCapSec]);
 
-  // If live API finishes after the timer hit the 92% cap, jump smoothly to 100%
+  // Track if the live scanner had to wait at the hold point for the EPO API response
   useEffect(() => {
-    if (isLiveMode && isVisible && isApiReady && localElapsedSec >= totalDuration * 0.9) {
-      setLocalElapsedSec(totalDuration);
+    if (isLiveMode && isVisible && !isApiReady && localElapsedSec >= holdCapSec) {
+      setDidWaitForApi(true);
     }
-  }, [isLiveMode, isVisible, isApiReady, localElapsedSec, totalDuration]);
+  }, [isLiveMode, isVisible, isApiReady, localElapsedSec, holdCapSec]);
 
   const effectiveElapsedSec = isLiveMode
     ? localElapsedSec
     : Math.max(elapsedTime, localElapsedSec);
 
-  // Track progress and update check statuses dynamically
+  // Track progress and update check statuses sequentially (only one check runs at a time)
   useEffect(() => {
     if (!isVisible) {
       setActiveChecks({});
@@ -144,12 +151,12 @@ export default function AuditScannerModal({
 
     SCANNER_CHECKS.forEach((check, index) => {
       const threshold = check.revealAtMs;
-      const priorThreshold = index > 0 ? SCANNER_CHECKS[index - 1].revealAtMs : 0;
+      const priorDone = index === 0 || newStatuses[SCANNER_CHECKS[index - 1].id] === "done";
       const canFinish = !isLiveMode || !check.requiresApiData || isApiReady;
 
-      if (effectiveElapsedMs >= threshold && canFinish) {
+      if (priorDone && effectiveElapsedMs >= threshold && canFinish) {
         newStatuses[check.id] = "done";
-      } else if (effectiveElapsedMs >= priorThreshold) {
+      } else if (priorDone) {
         newStatuses[check.id] = "running";
       } else {
         newStatuses[check.id] = "pending";

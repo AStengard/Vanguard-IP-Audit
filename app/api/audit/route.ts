@@ -104,13 +104,13 @@ export async function POST(req: NextRequest) {
     const validNormalized = normalizedResults.filter((n) => n.isValid);
     const malformedInputs = normalizedResults.filter((n) => !n.isValid);
 
-    // 5. Query /biblio, /legal, /family, and /register at a controlled pace (2 patents at a time)
-    //    so large batches stay cleanly within EPO OPS v3.2 Fair-Use per-minute throttling limits
+    // 5. Query /biblio, /legal, /family, and /register at a controlled pace (3 patents at a time)
+    //    so large batches stay fast while remaining within EPO OPS v3.2 Fair-Use throttling limits
     const auditedRecords = await mapWithConcurrency(
       validNormalized,
-      2,
+      3,
       (norm) => fetchFullPatentAuditRecord(norm),
-      200
+      120
     );
 
     return NextResponse.json({
