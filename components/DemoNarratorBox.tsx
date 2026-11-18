@@ -10,6 +10,7 @@ import {
   ShieldAlert,
   FileText,
   Database,
+  ArrowRight,
 } from "lucide-react";
 import { useRecruiterDemo } from "./RecruiterDemoContext";
 
@@ -73,7 +74,7 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
 };
 
 export default function DemoNarratorBox() {
-  const { isDemoActive, currentStepIndex, isCompleted } = useRecruiterDemo();
+  const { isDemoActive, currentStepIndex, isCompleted, nextStep } = useRecruiterDemo();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   // Only display when demo is active and before the final completion celebration card
@@ -81,6 +82,7 @@ export default function DemoNarratorBox() {
 
   const narration = STEP_NARRATIONS[currentStepIndex] || STEP_NARRATIONS[0];
   const Icon = narration.icon;
+  const isLastStep = currentStepIndex === 4;
 
   return (
     <aside
@@ -109,7 +111,18 @@ export default function DemoNarratorBox() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Highlighted Next Step CTA inside the Tour Commentary Header */}
+            <button
+              type="button"
+              onClick={nextStep}
+              className="inline-flex items-center gap-1 h-6 px-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black shadow-xs transition cursor-pointer shrink-0"
+              title={isLastStep ? "Finish demo" : "Go to next step"}
+            >
+              <span>{isLastStep ? "Finish" : "Next"}</span>
+              <ArrowRight className="w-3 h-3 stroke-[2.5]" />
+            </button>
+
             {/* Collapse / Expand Toggle */}
             <button
               type="button"

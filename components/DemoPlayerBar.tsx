@@ -7,6 +7,7 @@ import {
   X,
   RotateCcw,
   FastForward,
+  ArrowRight,
 } from "lucide-react";
 import { useRecruiterDemo } from "./RecruiterDemoContext";
 
@@ -53,9 +54,7 @@ export default function DemoPlayerBar() {
               className={`relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 ${
                 isCompleted
                   ? "bg-teal-400"
-                  : isPlaying
-                  ? "bg-emerald-400"
-                  : "bg-amber-400"
+                  : "bg-emerald-400"
               }`}
             />
           </span>
@@ -94,7 +93,13 @@ export default function DemoPlayerBar() {
           <button
             type="button"
             onClick={isPlaying ? pauseDemo : resumeDemo}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center font-bold transition shadow-xs cursor-pointer group shrink-0"
+            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center font-bold transition shadow-xs cursor-pointer group shrink-0 ${
+              isCompleted
+                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+                : isPlaying
+                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950"
+                : "bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-300 hover:text-white"
+            }`}
             title={
               isCompleted
                 ? "Restart demo from beginning"
@@ -123,15 +128,20 @@ export default function DemoPlayerBar() {
             <span>Back</span>
           </button>
 
-          {/* Forward Step Button */}
+          {/* Forward Step Button (Hero highlighted when paused so recruiters know what to click next) */}
           <button
             type="button"
             onClick={nextStep}
             disabled={isCompleted}
-            className="inline-flex items-center justify-center h-7 sm:h-8 px-2.5 sm:px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-[11px] sm:text-xs font-bold text-slate-200 hover:text-white transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+            className={`inline-flex items-center justify-center gap-1.5 h-7 sm:h-8 px-3 sm:px-4 rounded-xl font-black text-[11px] sm:text-xs transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${
+              !isCompleted && !isPlaying
+                ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 animate-pulse hover:animate-none scale-[1.02]"
+                : "bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white"
+            }`}
             title={isLastStep ? "Finish demo" : "Go to next step"}
           >
             <span>{isLastStep ? "Finish" : "Next"}</span>
+            <ArrowRight className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
           </button>
 
           {/* Exit Demo Close Icon (X) */}
@@ -168,16 +178,14 @@ export default function DemoPlayerBar() {
                 type="button"
                 onClick={() => jumpToStep(idx)}
                 className={`flex-1 h-1.5 bg-slate-800 hover:bg-slate-700 rounded-full overflow-hidden transition-all duration-150 cursor-pointer relative group/step focus:outline-none ${
-                  isCurrent && !isPlaying ? "ring-1 ring-amber-400/50" : ""
+                  isCurrent && !isPlaying ? "ring-1 ring-emerald-400/50" : ""
                 }`}
                 title={`${step.label}: ${step.title} (Click to jump)`}
               >
                 <div
                   className={`h-full rounded-full transition-all duration-100 ${
                     isCurrent
-                      ? isPlaying
-                        ? "bg-gradient-to-r from-emerald-500 to-teal-300"
-                        : "bg-amber-400/80"
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-300"
                       : "bg-emerald-500/80"
                   }`}
                   style={{ width }}
@@ -194,12 +202,12 @@ export default function DemoPlayerBar() {
               {isCompleted
                 ? "Tour Completed"
                 : !isPlaying
-                ? `Paused — Step ${currentStepIndex + 1} of ${steps.length}`
+                ? `Step ${currentStepIndex + 1} of ${steps.length}`
                 : `${Math.round(elapsedTime)}s / ${currentStep.duration}s`}
             </span>
             <span className="text-slate-600">•</span>
-            <span className="hidden sm:inline text-slate-500">
-              Use Back / Next or press Play
+            <span className="hidden sm:inline text-slate-400">
+              {isLastStep ? "Click Finish" : "Click Next when ready"}
             </span>
           </div>
           <div className="flex items-center gap-1 text-slate-500">

@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Loader2,
+  ArrowRight,
 } from "lucide-react";
 import { useRecruiterDemo } from "./RecruiterDemoContext";
 
@@ -90,7 +91,7 @@ export default function AuditScannerModal({
   modeBadge,
   footerTag,
 }: AuditScannerModalProps = {}) {
-  const { isDemoActive, currentStepIndex, playbackSpeed, elapsedTime } =
+  const { isDemoActive, currentStepIndex, playbackSpeed, elapsedTime, nextStep } =
     useRecruiterDemo();
 
   const [activeChecks, setActiveChecks] = useState<Record<string, "pending" | "running" | "done">>({});
@@ -134,6 +135,17 @@ export default function AuditScannerModal({
       setDidWaitForApi(true);
     }
   }, [isLiveMode, isVisible, isApiReady, localElapsedSec, holdCapSec]);
+
+  // In demo mode: once the 8s statutory scan finishes, smoothly proceed to Step 3 (Overview)
+  useEffect(() => {
+    if (isLiveMode || !isVisible) return;
+    if (localElapsedSec >= totalDuration) {
+      const timer = setTimeout(() => {
+        nextStep();
+      }, 750);
+      return () => clearTimeout(timer);
+    }
+  }, [isLiveMode, isVisible, localElapsedSec, totalDuration, nextStep]);
 
   const effectiveElapsedSec = isLiveMode
     ? localElapsedSec
@@ -325,9 +337,22 @@ export default function AuditScannerModal({
         {/* Bottom Footer Note */}
         <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
           <span>Building executive transaction audit matrix...</span>
-          <span className="text-slate-500 font-mono text-[10px]">
-            {isLiveMode ? footerTag || "EPO OPS v3.2 • Live Query" : "Step 2/5 • Live Simulation"}
-          </span>
+          <div className="flex items-center gap-2">
+            {!isLiveMode && (
+              <button
+                type="button"
+                onClick={nextStep}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-[10px] font-black shadow-xs transition cursor-pointer"
+                title="Proceed to Step 3 (Overview)"
+              >
+                <span>Next</span>
+                <ArrowRight className="w-3 h-3 stroke-[2.5]" />
+              </button>
+            )}
+            <span className="text-slate-500 font-mono text-[10px]">
+              {isLiveMode ? footerTag || "EPO OPS v3.2 • Live Query" : "Step 2/5 • Live Simulation"}
+            </span>
+          </div>
         </div>
       </div>
     </div>
