@@ -138,10 +138,10 @@ export default function MemoPage() {
           <div className="flex items-center justify-between font-sans">
             <div>
               <span className="text-xs font-black tracking-widest text-slate-900 uppercase">
-                Vanguard Legal Advisory LLP
+                Your Law Firm Name LLP
               </span>
               <div className="text-[10px] text-slate-500 font-medium">
-                European Patent Practice &amp; Corporate M&amp;A Due Diligence Group
+                Patent Practice &amp; Corporate M&amp;A Due Diligence Group
               </div>
             </div>
             <div className="text-right text-[10px] text-slate-500 font-mono">
@@ -156,7 +156,7 @@ export default function MemoPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans pt-2 text-slate-700">
             <div><strong>TO:</strong> Lead Transaction Partner / Investment Committee</div>
             <div><strong>DATE:</strong> 15 November 2026</div>
-            <div><strong>FROM:</strong> European Patent Audit Practice Group</div>
+            <div><strong>FROM:</strong> Patent Audit Practice Group</div>
             <div><strong>TARGET ENTITY:</strong> {targetCompany}</div>
             <div className="sm:col-span-2">
               <strong>TRANSACTION:</strong> Acquisition of 100% of the Share Capital of {targetCompany}
@@ -307,10 +307,10 @@ export default function MemoPage() {
           <div className="flex items-center justify-between pt-4">
             <div>
               <div className="font-serif italic text-base text-slate-900 font-bold">
-                Vanguard Legal Advisory LLP
+                Your Law Firm Name LLP
               </div>
               <div className="text-[11px] text-slate-500">
-                European Patent Practice Group &bull; Munich &bull; London &bull; Zurich
+                Patent Practice Group &bull; Stockholm &bull; London &bull; Zurich
               </div>
             </div>
             <div className="w-24 h-12 border border-dashed border-slate-300 rounded flex items-center justify-center text-[10px] text-slate-400 font-mono">

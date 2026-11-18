@@ -77,11 +77,11 @@ export default function DemoSpotlight({
         variantStyles.ring
       } ${pulse ? "animate-pulse" : ""} ${className}`}
     >
-      {/* Floating Explanatory Spotlight Badge (bounces up and down, high contrast, no emojis/icons) */}
+      {/* Floating Explanatory Spotlight Badge (stationary, high contrast, no emojis/icons) */}
       <div
         className={`absolute ${positionStyles} z-40 pointer-events-none flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider shadow-xl ${
           variantStyles.badgeBg
-        } animate-bounce`}
+        }`}
       >
         <span>{cleanBadgeText}</span>
         {badgeSubtext && (

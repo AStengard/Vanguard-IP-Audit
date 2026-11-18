@@ -33,7 +33,7 @@ import { SamplePatentRecord, SAMPLE_MA_PATENTS } from '@/lib/sampleDeal';
 
 export default function LandingPortalPage() {
   const router = useRouter();
-  const { isDemoActive, currentStepIndex, playbackSpeed, isPlaying, startDemo } =
+  const { isDemoActive, currentStepIndex, playbackSpeed, isPlaying, startDemo, nextStep } =
     useRecruiterDemo();
   const {
     targetCompany,
@@ -218,6 +218,13 @@ export default function LandingPortalPage() {
   // Run the Custom Audit
   const handleRunCustomAudit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // During Step 1 of the Recruiter Demo, clicking the audit button advances to Step 2 (Scanner)
+    if (isDemoActive && currentStepIndex === 0) {
+      nextStep();
+      return;
+    }
+
     setApiError(null);
     setIsSubmitting(true);
 
@@ -489,7 +496,11 @@ export default function LandingPortalPage() {
             </p>
           </div>
 
-          <form onSubmit={handleRunCustomAudit} className="space-y-4">
+          <form
+            onSubmit={handleRunCustomAudit}
+            noValidate={isDemoActive && currentStepIndex === 0}
+            className="space-y-4"
+          >
             {/* Target Entity Input */}
             <div className="space-y-1">
               <div className="flex items-center justify-between">
@@ -579,10 +590,10 @@ export default function LandingPortalPage() {
               </div>
             </DemoSpotlight>
 
-            {/* Submit Button with Bouncing Badge & Glowing Ring */}
+            {/* Submit Button with Demo Callout Badge & Glowing Ring */}
             <div className="pt-4 relative">
               {isDemoActive && currentStepIndex === 0 && showSyntheticPointer && (
-                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-bounce">
+                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
                   <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-600 text-white border-2 border-white text-[10px] font-black uppercase tracking-wider shadow-xl whitespace-nowrap">
                     Triggering 5-Pillar Audit...
                   </span>
