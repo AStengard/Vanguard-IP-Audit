@@ -26,7 +26,7 @@ export default function DemoSpotlight({
   badgePosition = "top-right",
   variant = "emerald",
   className = "",
-  pulse = false,
+  pulse = true,
 }: DemoSpotlightProps) {
   const { isDemoActive, currentStepIndex } = useRecruiterDemo();
 
@@ -38,23 +38,23 @@ export default function DemoSpotlight({
     return <div id={id} className={className}>{children}</div>;
   }
 
-  // Variant styling mapping with solid opaque backgrounds and clean, non-glowing high-contrast borders
+  // Variant styling mapping with solid opaque backgrounds for maximum contrast and visibility
   const variantStyles = {
     emerald: {
-      ring: "ring-2 ring-emerald-500/80 border border-emerald-500/50 shadow-sm",
-      badgeBg: "bg-emerald-600 text-white border-2 border-white shadow-md",
+      ring: "ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.35)] border-emerald-500/50",
+      badgeBg: "bg-emerald-600 text-white border-2 border-white shadow-xl shadow-emerald-950/20",
     },
     rose: {
-      ring: "ring-2 ring-rose-500/80 border border-rose-500/50 shadow-sm",
-      badgeBg: "bg-rose-600 text-white border-2 border-white shadow-md",
+      ring: "ring-2 ring-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.35)] border-rose-500/50",
+      badgeBg: "bg-rose-600 text-white border-2 border-white shadow-xl shadow-rose-950/20",
     },
     amber: {
-      ring: "ring-2 ring-amber-500/80 border border-amber-500/50 shadow-sm",
-      badgeBg: "bg-amber-600 text-white border-2 border-white shadow-md",
+      ring: "ring-2 ring-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.35)] border-amber-500/50",
+      badgeBg: "bg-amber-600 text-white border-2 border-white shadow-xl shadow-amber-950/20",
     },
     blue: {
-      ring: "ring-2 ring-blue-500/80 border border-blue-500/50 shadow-sm",
-      badgeBg: "bg-blue-600 text-white border-2 border-white shadow-md",
+      ring: "ring-2 ring-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.35)] border-blue-500/50",
+      badgeBg: "bg-blue-600 text-white border-2 border-white shadow-xl shadow-blue-950/20",
     },
   }[variant];
 
@@ -73,9 +73,9 @@ export default function DemoSpotlight({
   return (
     <div
       id={id}
-      className={`relative rounded-2xl transition-all duration-300 ${
+      className={`relative rounded-2xl transition-all duration-500 ${
         variantStyles.ring
-      } ${className}`}
+      } ${pulse ? "animate-pulse" : ""} ${className}`}
     >
       {/* Floating Explanatory Spotlight Badge (stationary, high contrast, no emojis/icons) */}
       <div

@@ -111,7 +111,7 @@ export default function Navbar() {
             type="button"
             onClick={startDemo}
             className={`inline-flex items-center gap-1.5 xl:gap-2 h-9 px-2.5 xl:px-3.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-xs border whitespace-nowrap shrink-0 ${isDemoActive
-                ? 'bg-emerald-700 text-white border-emerald-800 ring-1 ring-emerald-500'
+                ? 'bg-emerald-700 text-white border-emerald-800 ring-2 ring-emerald-400/50 shadow-emerald-500/20'
                 : 'bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-600/80 hover:shadow-sm'
               }`}
             title="Watch 5-step automated walkthrough of all Vanguard IP Audit features"

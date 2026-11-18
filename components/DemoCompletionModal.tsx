@@ -56,7 +56,7 @@ export default function DemoCompletionModal() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-slate-950 flex items-center justify-center shrink-0 shadow-md font-black">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-500/20 font-black">
               <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
             </div>
             <div>
