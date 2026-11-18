@@ -39,10 +39,21 @@ export interface AuditedEpoAsset {
   throttlingHeader: string;
 }
 
-// Fetch wrapper with 401/403 Token Refresh & 429/503 Exponential Backoff
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function isExplicitNotFoundResponse(res: { status: number; xml: string }): boolean {
+  return (
+    res.status === 404 ||
+    res.status === 400 ||
+    res.xml.includes('SERVER.EntityNotFound') ||
+    res.xml.includes('CLIENT.InvalidNumber')
+  );
+}
+
+// Fetch wrapper with OAuth2 Token Refresh & EPO Fair-Use (403/429/503) Exponential Backoff
 async function fetchOpsXmlWithRetry(
   path: string,
-  maxRetries = 3
+  maxRetries = 4
 ): Promise<{ xml: string; throttlingControl: string; status: number }> {
   let attempt = 0;
   let forceTokenRefresh = false;
@@ -61,35 +72,73 @@ async function fetchOpsXmlWithRetry(
     });
 
     const throttlingControl = res.headers.get('X-Throttling-Control') || 'idle (retrieval=green:200)';
-
-    // Immediate token refresh if EPO rejects bearer token
-    if ((res.status === 401 || res.status === 403) && attempt < maxRetries) {
-      forceTokenRefresh = true;
-      attempt++;
-      continue;
-    }
-
-    // Exponential backoff + jitter if EPO throttles (HTTP 429 or 503)
-    if ((res.status === 429 || res.status === 503) && attempt < maxRetries) {
-      const retryAfterSec = Number(res.headers.get('Retry-After')) || Math.pow(2, attempt + 1);
-      const jitterMs = Math.floor(Math.random() * 350);
-      await new Promise((r) => setTimeout(r, retryAfterSec * 1000 + jitterMs));
-      attempt++;
-      continue;
-    }
-
+    const rejectionReason = res.headers.get('X-Rejection-Reason') || '';
     const xml = await res.text();
+
+    // EPO OPS uses HTTP 403 for BOTH expired OAuth tokens AND Fair-Use / per-minute throttling.
+    // Distinguish them so Fair-Use 403s back off properly instead of hammering /auth/accesstoken.
+    const isAuthError =
+      res.status === 401 ||
+      (res.status === 403 &&
+        /invalid_access_token|access token|expired|invalid_client|unauthorized/i.test(xml) &&
+        !rejectionReason);
+
+    const isThrottled =
+      res.status === 429 ||
+      res.status === 503 ||
+      (res.status === 403 &&
+        (Boolean(rejectionReason) ||
+          /fair use|quota|throttl|rate.?limit|overloaded|CLIENT\.Quota/i.test(xml)));
+
+    if (isAuthError && attempt < maxRetries) {
+      forceTokenRefresh = true;
+      await sleep(250 + Math.floor(Math.random() * 200));
+      attempt++;
+      continue;
+    }
+
+    if (isThrottled && attempt < maxRetries) {
+      const retryAfterSec = Number(res.headers.get('Retry-After')) || 0;
+      const backoffMs = Math.max(retryAfterSec * 1000, 1000 * Math.pow(2, attempt));
+      const jitterMs = Math.floor(Math.random() * 450);
+      await sleep(Math.min(backoffMs + jitterMs, 8000));
+      attempt++;
+      continue;
+    }
+
+    // Gentle pacing when EPO signals yellow/red throttling pressure on a successful response
+    if (res.status === 200 && /=(?:yellow|red):/i.test(throttlingControl)) {
+      await sleep(250);
+    }
+
     return { xml, throttlingControl, status: res.status };
   }
 
   throw new Error(`EPO OPS request exhausted retries for path: ${path}`);
 }
 
-// 1. Standardize messy patent numbers via EPO OPS Number Service
+// 1. Standardize patent numbers (fast local parse for clean EP numbers; EPO Number Service for messy/app numbers)
 export async function normalizePatentNumber(rawInput: string): Promise<NormalizedPatentId> {
   const cleaned = rawInput.trim();
   if (!cleaned) {
     return { rawInput, isValid: false, error: 'Empty patent identifier' };
+  }
+
+  // Fast-path clean European publication numbers (e.g. EP3305198B1, EP3702115, EP 3412890 B1)
+  // Avoids burning extra EPO Number Service quota on already-clean EP publication IDs
+  const cleanEpMatch = cleaned.match(/^EP[\s.-]*(\d{7,8})[\s.-]*([A-Z]\d)?$/i);
+  if (cleanEpMatch) {
+    const docNumber = cleanEpMatch[1];
+    const kind = (cleanEpMatch[2] || 'B1').toUpperCase();
+    return {
+      rawInput,
+      isValid: true,
+      country: 'EP',
+      docNumber,
+      kind,
+      docdb: `EP.${docNumber}.${kind}`,
+      epodoc: `EP${docNumber}`,
+    };
   }
 
   // Detect whether input is an application number (e.g. 18192044.8) or publication number
@@ -137,27 +186,86 @@ function formatEpoDate(raw?: string): string {
   return `${raw.slice(0, 4)}-${raw.slice(4, 6)}-${raw.slice(6, 8)}`;
 }
 
+function decodeXmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function extractNamesFromBlocks(xml: string, blockPatterns: RegExp[]): string[] {
+  const seen = new Set<string>();
+  const results: string[] = [];
+  const nameRegex = /<(?:[a-z0-9_-]+:)?name(?:\s[^>]*)?>([^<]+)<\/(?:[a-z0-9_-]+:)?name>/gi;
+
+  for (const blockRegex of blockPatterns) {
+    for (const blockMatch of xml.matchAll(blockRegex)) {
+      const inner = blockMatch[1] || '';
+      for (const nameMatch of inner.matchAll(nameRegex)) {
+        const cleaned = decodeXmlEntities(nameMatch[1] || '')
+          .replace(/\s*\[[A-Z]{2}\]\s*$/, '')
+          .trim();
+        const key = cleaned.toLowerCase();
+        if (cleaned && !seen.has(key)) {
+          seen.add(key);
+          results.push(cleaned);
+        }
+      }
+    }
+    if (results.length > 0) break;
+  }
+
+  return results;
+}
+
 // 2. Parallel Retrieval & XML Parsing for a Normalized Patent
 export async function fetchFullPatentAuditRecord(norm: NormalizedPatentId): Promise<AuditedEpoAsset> {
   const docdbId = norm.docdb!;
   const epodocId = norm.epodoc!;
 
-  const [biblioRes, legalRes, familyRes, registerRes] = await Promise.all([
+  let [biblioRes, legalRes, familyRes, registerRes] = await Promise.all([
     fetchOpsXmlWithRetry(`/published-data/publication/docdb/${docdbId}/biblio`),
     fetchOpsXmlWithRetry(`/legal/publication/docdb/${docdbId}`),
     fetchOpsXmlWithRetry(`/family/publication/docdb/${docdbId}`),
     fetchOpsXmlWithRetry(`/register/publication/epodoc/${epodocId}/biblio`),
   ]);
 
-  // Extract English title or fallback to first invention-title
-  const titleMatch =
-    biblioRes.xml.match(/<invention-title[^>]*lang="en"[^>]*>([^<]+)<\/invention-title>/i) ||
-    biblioRes.xml.match(/<invention-title[^>]*>([^<]+)<\/invention-title>/i);
+  // Fallback to epodoc /biblio if a specific kind-code (e.g. B1) wasn't found in published-data
+  // (for example, an application still at A1 or a user-entered number without kind code)
+  if (isExplicitNotFoundResponse(biblioRes)) {
+    const epodocBiblioRes = await fetchOpsXmlWithRetry(
+      `/published-data/publication/epodoc/${epodocId}/biblio`
+    );
+    if (epodocBiblioRes.status === 200) {
+      biblioRes = epodocBiblioRes;
+    }
+  }
 
-  // Extract applicants / proprietors
-  const applicants = Array.from(
-    biblioRes.xml.matchAll(/<applicant-name[^>]*>\s*<name>([^<]+)<\/name>/gi)
-  ).map((m) => m[1].trim());
+  // Extract English title (prefer /biblio, fall back to /register XML with optional namespace prefix)
+  const titleMatch =
+    biblioRes.xml.match(/<(?:[a-z0-9_-]+:)?invention-title[^>]*lang="en"[^>]*>([^<]+)<\/(?:[a-z0-9_-]+:)?invention-title>/i) ||
+    biblioRes.xml.match(/<(?:[a-z0-9_-]+:)?invention-title[^>]*>([^<]+)<\/(?:[a-z0-9_-]+:)?invention-title>/i) ||
+    registerRes.xml.match(/<(?:[a-z0-9_-]+:)?invention-title[^>]*lang="en"[^>]*>([^<]+)<\/(?:[a-z0-9_-]+:)?invention-title>/i) ||
+    registerRes.xml.match(/<(?:[a-z0-9_-]+:)?invention-title[^>]*>([^<]+)<\/(?:[a-z0-9_-]+:)?invention-title>/i);
+
+  // Extract recorded proprietor / applicant from /biblio AND /register XML (strictly scoped to single entity blocks)
+  const biblioApplicants = extractNamesFromBlocks(biblioRes.xml, [
+    /<applicant[^>]*data-format="epodoc"[^>]*>([\s\S]*?)<\/applicant>/gi,
+    /<(?:[a-z0-9_-]+:)?applicant-name(?:\s[^>]*)?>([\s\S]*?)<\/(?:[a-z0-9_-]+:)?applicant-name>/gi,
+    /<(?:[a-z0-9_-]+:)?applicant(?:\s[^>]*)?>([\s\S]*?)<\/(?:[a-z0-9_-]+:)?applicant>/gi,
+  ]);
+
+  const registerApplicants = extractNamesFromBlocks(registerRes.xml, [
+    /<(?:[a-z0-9_-]+:)?proprietor(?:\s[^>]*)?>([\s\S]*?)<\/(?:[a-z0-9_-]+:)?proprietor>/gi,
+    /<(?:[a-z0-9_-]+:)?applicant(?:\s[^>]*)?>([\s\S]*?)<\/(?:[a-z0-9_-]+:)?applicant>/gi,
+  ]);
+
+  // Use /biblio applicants (consistent with single-patent lookups), falling back to /register if /biblio is missing
+  const applicants = biblioApplicants.length > 0 ? biblioApplicants : registerApplicants;
 
   // Extract CPC classification symbols
   const cpcClasses = Array.from(
@@ -221,18 +329,16 @@ export async function fetchFullPatentAuditRecord(norm: NormalizedPatentId): Prom
     ? 'EPO Register Unitary Effect registration record'
     : undefined;
 
-  const biblioNotFound =
-    biblioRes.status !== 200 ||
-    biblioRes.xml.includes('SERVER.EntityNotFound') ||
-    biblioRes.xml.includes('CLIENT.InvalidNumber');
-  const registerNotFound =
-    registerRes.status !== 200 ||
-    registerRes.xml.includes('SERVER.EntityNotFound') ||
-    registerRes.xml.includes('CLIENT.InvalidNumber');
+  const biblioNotFound = isExplicitNotFoundResponse(biblioRes);
+  const registerNotFound = isExplicitNotFoundResponse(registerRes);
   const notFoundInEpo = biblioNotFound && registerNotFound;
 
-  const rawFiling = biblioRes.xml.match(/<application-reference[\s\S]*?<date>(\d{8})<\/date>/)?.[1];
-  const rawGrant = biblioRes.xml.match(/<publication-reference[\s\S]*?<date>(\d{8})<\/date>/)?.[1];
+  const rawFiling =
+    biblioRes.xml.match(/<(?:[a-z0-9_-]+:)?application-reference[\s\S]*?<(?:[a-z0-9_-]+:)?date>(\d{8})<\/(?:[a-z0-9_-]+:)?date>/i)?.[1] ||
+    registerRes.xml.match(/<(?:[a-z0-9_-]+:)?application-reference[\s\S]*?<(?:[a-z0-9_-]+:)?date>(\d{8})<\/(?:[a-z0-9_-]+:)?date>/i)?.[1];
+  const rawGrant =
+    biblioRes.xml.match(/<(?:[a-z0-9_-]+:)?publication-reference[\s\S]*?<(?:[a-z0-9_-]+:)?date>(\d{8})<\/(?:[a-z0-9_-]+:)?date>/i)?.[1] ||
+    registerRes.xml.match(/<(?:[a-z0-9_-]+:)?publication-reference[\s\S]*?<(?:[a-z0-9_-]+:)?date>(\d{8})<\/(?:[a-z0-9_-]+:)?date>/i)?.[1];
 
   return {
     rawInput: norm.rawInput,
@@ -240,7 +346,9 @@ export async function fetchFullPatentAuditRecord(norm: NormalizedPatentId): Prom
     epodoc: epodocId,
     title: notFoundInEpo
       ? 'Patent Number Not Found in EPO Register'
-      : titleMatch?.[1]?.trim() || `European Patent ${epodocId}`,
+      : titleMatch?.[1]
+      ? decodeXmlEntities(titleMatch[1])
+      : `European Patent ${epodocId}`,
     applicants: notFoundInEpo
       ? ['No Matching EPO Record']
       : applicants.length

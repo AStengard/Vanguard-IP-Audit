@@ -19,6 +19,11 @@ export class MissingEpoCredentialsError extends Error {
 
 // Singleton token cache in Node.js server memory across warm invocations
 let tokenCache: EpoTokenState | null = null;
+let inFlightTokenPromise: Promise<{
+  accessToken: string;
+  cacheStatus: 'HIT' | 'REFRESHED';
+  ttlSecondsRemaining: number;
+}> | null = null;
 const PRE_EXPIRY_BUFFER_MS = 90 * 1000; // Refresh 90 seconds before 20-minute expiration
 
 export async function getEpoAccessToken(forceRefresh = false): Promise<{
@@ -47,38 +52,52 @@ export async function getEpoAccessToken(forceRefresh = false): Promise<{
     };
   }
 
-  const credentialsBase64 = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
-  const tokenUrl = process.env.EPO_OPS_TOKEN_URL || 'https://ops.epo.org/3.2/auth/accesstoken';
-
-  const response = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${credentialsBase64}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Accept: 'application/json',
-    },
-    body: 'grant_type=client_credentials',
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    const errText = await response.text().catch(() => 'Unknown error');
-    throw new Error(`EPO OAuth2 Authentication Failed (HTTP ${response.status}): ${errText}`);
+  // Deduplicate simultaneous OAuth2 token requests so parallel batches don't stampede /auth/accesstoken
+  if (inFlightTokenPromise) {
+    return inFlightTokenPromise;
   }
 
-  const payload = await response.json();
-  const expiresInSeconds = Number(payload.expires_in) || 1200; // Default 20 minutes
+  inFlightTokenPromise = (async () => {
+    try {
+      const credentialsBase64 = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
+      const tokenUrl = process.env.EPO_OPS_TOKEN_URL || 'https://ops.epo.org/3.2/auth/accesstoken';
 
-  tokenCache = {
-    accessToken: payload.access_token,
-    issuedAt: now,
-    expiresAt: now + expiresInSeconds * 1000,
-  };
+      const response = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${credentialsBase64}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: 'grant_type=client_credentials',
+        cache: 'no-store',
+      });
 
-  return {
-    accessToken: tokenCache.accessToken,
-    cacheStatus: 'REFRESHED',
-    ttlSecondsRemaining: expiresInSeconds,
-  };
+      if (!response.ok) {
+        const errText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`EPO OAuth2 Authentication Failed (HTTP ${response.status}): ${errText}`);
+      }
+
+      const payload = await response.json();
+      const expiresInSeconds = Number(payload.expires_in) || 1200; // Default 20 minutes
+      const issuedNow = Date.now();
+
+      tokenCache = {
+        accessToken: payload.access_token,
+        issuedAt: issuedNow,
+        expiresAt: issuedNow + expiresInSeconds * 1000,
+      };
+
+      return {
+        accessToken: tokenCache.accessToken,
+        cacheStatus: 'REFRESHED' as const,
+        ttlSecondsRemaining: expiresInSeconds,
+      };
+    } finally {
+      inFlightTokenPromise = null;
+    }
+  })();
+
+  return inFlightTokenPromise;
 }
 

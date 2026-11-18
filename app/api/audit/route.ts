@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getEpoAccessToken, MissingEpoCredentialsError } from '@/lib/epoAuth';
 import { normalizePatentNumber, fetchFullPatentAuditRecord } from '@/lib/epoClient';
 
+export const maxDuration = 60;
+
 interface RateLimitBucket {
   count: number;
   resetAt: number;
@@ -16,6 +18,30 @@ const ipRateLimits = new Map<string, RateLimitBucket>();
 const MAX_REQUESTS_PER_HOUR = 10;
 const MAX_PATENTS_PER_BATCH = 15;
 const ONE_HOUR_MS = 60 * 60 * 1000;
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<R>,
+  staggerMs = 200
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  async function runWorker() {
+    while (nextIndex < items.length) {
+      const idx = nextIndex++;
+      results[idx] = await worker(items[idx]);
+      if (staggerMs > 0 && nextIndex < items.length) {
+        await new Promise((r) => setTimeout(r, staggerMs));
+      }
+    }
+  }
+
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  return results;
+}
 
 export async function POST(req: NextRequest) {
   // 1. Identify Client IP & Enforce In-Memory Rate Limit (Protect 4 GB/week EPO Quota)
@@ -67,17 +93,24 @@ export async function POST(req: NextRequest) {
     bucket.count += 1;
     ipRateLimits.set(clientIp, bucket);
 
-    // 4. Normalize all messy inputs via EPO OPS Number Service without failing the batch
-    const normalizedResults = await Promise.all(
-      rawInputs.map((input) => normalizePatentNumber(input))
+    // 4. Normalize all inputs with controlled concurrency (clean EP numbers parse locally with 0 API calls)
+    const normalizedResults = await mapWithConcurrency(
+      rawInputs,
+      3,
+      (input) => normalizePatentNumber(input),
+      100
     );
 
     const validNormalized = normalizedResults.filter((n) => n.isValid);
     const malformedInputs = normalizedResults.filter((n) => !n.isValid);
 
-    // 5. Query /biblio, /legal, /family, and /register for each valid normalized patent
-    const auditedRecords = await Promise.all(
-      validNormalized.map((norm) => fetchFullPatentAuditRecord(norm))
+    // 5. Query /biblio, /legal, /family, and /register at a controlled pace (2 patents at a time)
+    //    so large batches stay cleanly within EPO OPS v3.2 Fair-Use per-minute throttling limits
+    const auditedRecords = await mapWithConcurrency(
+      validNormalized,
+      2,
+      (norm) => fetchFullPatentAuditRecord(norm),
+      200
     );
 
     return NextResponse.json({
