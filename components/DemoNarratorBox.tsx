@@ -10,7 +10,6 @@ import {
   ShieldAlert,
   FileText,
   Database,
-  ArrowRight,
 } from "lucide-react";
 import { useRecruiterDemo } from "./RecruiterDemoContext";
 
@@ -74,7 +73,7 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
 };
 
 export default function DemoNarratorBox() {
-  const { isDemoActive, currentStepIndex, isCompleted, nextStep, isStepReady } = useRecruiterDemo();
+  const { isDemoActive, currentStepIndex, isCompleted } = useRecruiterDemo();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
 
   // Only display when demo is active and before the final completion celebration card
@@ -82,7 +81,6 @@ export default function DemoNarratorBox() {
 
   const narration = STEP_NARRATIONS[currentStepIndex] || STEP_NARRATIONS[0];
   const Icon = narration.icon;
-  const isLastStep = currentStepIndex === 4;
 
   return (
     <aside
@@ -100,33 +98,12 @@ export default function DemoNarratorBox() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
             </span>
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400 truncate">
-                Tour Commentary
-              </span>
-              <span className="text-slate-600">•</span>
-              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
-                Step {currentStepIndex + 1}/5
-              </span>
-            </div>
+            <span className="text-[11px] font-black uppercase tracking-wider text-emerald-400 truncate">
+              Tour Commentary
+            </span>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            {/* Highlighted Next Step CTA inside the Tour Commentary Header */}
-            <button
-              type="button"
-              onClick={nextStep}
-              className={`inline-flex items-center gap-1 h-6 px-2.5 rounded-lg text-[10px] font-black transition-all duration-300 cursor-pointer shrink-0 ${
-                isStepReady
-                  ? "bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-xs ring-1 ring-emerald-400/80 animate-pulse hover:animate-none"
-                  : "bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
-              }`}
-              title={isLastStep ? "Finish demo" : "Go to next step"}
-            >
-              <span>{isLastStep ? "Finish" : "Next"}</span>
-              <ArrowRight className={`w-3 h-3 stroke-[2.5] ${isStepReady ? "text-slate-950" : "text-slate-400"}`} />
-            </button>
-
+          <div className="flex items-center gap-1 shrink-0">
             {/* Collapse / Expand Toggle */}
             <button
               type="button"
