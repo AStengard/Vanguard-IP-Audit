@@ -406,32 +406,9 @@ export default function LandingPortalPage() {
         modeBadge={liveScan?.modeBadge}
         footerTag={liveScan?.footerTag}
       />
-      {/* =====================================================================
-          1. ACTIVE TRANSACTION RESUME BANNER (If session already exists)
-      ====================================================================== */}
-      {portfolioData && portfolioData.length > 0 && (
-        <div className="bg-slate-900 text-white rounded-2xl p-4 px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-3">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <div className="text-xs">
-              <span className="text-slate-400">Active Diligence Session: </span>
-              <strong className="text-white">{targetCompany}</strong>
-              <span className="text-slate-400"> ({portfolioData.length} patent assets loaded)</span>
-            </div>
-          </div>
-
-          <Link
-            href="/overview"
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition"
-          >
-            <span>Resume Active Audit Overview</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      )}
 
       {/* =====================================================================
-          2. HERO HEADLINE
+          1. HERO HEADLINE
       ====================================================================== */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">

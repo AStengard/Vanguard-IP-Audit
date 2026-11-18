@@ -1,4 +1,4 @@
-# Vanguard IP Audit — European Patent M&A Due Diligence Suite
+﻿# Vanguard IP Audit — European Patent M&A Due Diligence Suite
 
 > **Legal Tech Portfolio Project by [Alfred Stengard](https://astengard.github.io/cv/)** | Built with **Next.js 15 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS**, and the **European Patent Office (EPO) Open Patent Services (OPS) REST API v3.2**.
 

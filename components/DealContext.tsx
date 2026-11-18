@@ -352,7 +352,7 @@ interface DealContextType {
   isDealLoaded: boolean;
   activeAuditId: string | null;
   savedAudits: SavedAuditRecord[];
-  saveAuditRecord: (target: string, patents: SamplePatentRecord[], customName?: string) => string;
+  saveAuditRecord: (target: string, patents: SamplePatentRecord[], customName?: string, fixedId?: string) => string;
   loadSavedAudit: (id: string) => void;
   renameSavedAudit: (id: string, newName: string) => void;
   deleteSavedAudit: (id: string) => void;
@@ -410,7 +410,12 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     return { total, critical, warning, clean, cleanPct };
   }, [evaluatedPortfolio]);
 
-  const saveAuditRecord = (target: string, patents: SamplePatentRecord[], customName?: string): string => {
+  const saveAuditRecord = (
+    target: string,
+    patents: SamplePatentRecord[],
+    customName?: string,
+    fixedId?: string
+  ): string => {
     if (!target || patents.length === 0) return '';
     const evaluated = patents.map((p) => evaluatePatentAsset(p, target));
     const total = evaluated.length;
@@ -419,7 +424,7 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     const clean = evaluated.filter((p) => p.overallRisk === 'CLEAN').length;
     const cleanPct = total > 0 ? Math.round((clean / total) * 100) : 0;
 
-    const newId = `audit_${Date.now()}`;
+    const newId = fixedId || `audit_${Date.now()}`;
     const defaultName = customName || `${target} Diligence Scan`;
     const newRecord: SavedAuditRecord = {
       id: newId,
@@ -430,7 +435,10 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
       metrics: { total, critical, warning, clean, cleanPct }
     };
 
-    const updated = [newRecord, ...savedAudits.filter((a) => a.id !== newId)];
+    const updated = [
+      newRecord,
+      ...savedAudits.filter((a) => a.id !== newId && !(fixedId && a.name === defaultName))
+    ];
     persistAudits(updated);
     setActiveAuditId(newId);
     return newId;
@@ -468,7 +476,12 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
   const resetToShowcase = () => {
     setTargetCompany(DEFAULT_TARGET_COMPANY);
     setPortfolioData(SAMPLE_MA_PATENTS);
-    saveAuditRecord(DEFAULT_TARGET_COMPANY, SAMPLE_MA_PATENTS, 'Project Aetheris — MedTech Showcase');
+    saveAuditRecord(
+      DEFAULT_TARGET_COMPANY,
+      SAMPLE_MA_PATENTS,
+      'Project Aetheris — MedTech Showcase',
+      'audit_showcase_aetheris'
+    );
   };
 
   const clearDeal = () => {

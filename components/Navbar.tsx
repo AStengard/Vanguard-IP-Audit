@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   FileText,
   HelpCircle,
+  Home,
   Layers,
   Plus,
   LayoutDashboard,
@@ -38,6 +39,7 @@ export default function Navbar() {
   };
 
   const navLinks = [
+    { href: '/', label: 'Home', icon: Home },
     { href: '/overview', label: 'Overview', icon: LayoutDashboard },
     { href: '/portfolio', label: 'Portfolio Schedule', icon: Layers },
     { href: '/memo', label: 'Executive Memo', icon: FileText },
