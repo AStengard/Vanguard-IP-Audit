@@ -393,13 +393,21 @@ export default function PatentDossierPage() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {(asset.strictShowcaseDesignatedStates || [
-                { code: 'DE', status: 'VALIDATED', nationalRef: 'DE602021011418.9', renewalPaid: true },
-                { code: 'FR', status: 'VALIDATED', nationalRef: 'FR3904118', renewalPaid: true },
-                { code: 'GB', status: 'VALIDATED', nationalRef: 'GB3904118', renewalPaid: true }
-              ]).map((state) => (
+              {(asset.strictShowcaseDesignatedStates ||
+                (Array.isArray(asset.designatedStates) && asset.designatedStates.length > 0
+                  ? asset.designatedStates.map((s: any) =>
+                      typeof s === 'string'
+                        ? { code: s, status: 'VALIDATED', nationalRef: `${s}${asset.id}`, renewalPaid: true }
+                        : s
+                    )
+                  : [
+                      { code: 'DE', status: 'VALIDATED', nationalRef: 'DE602021011418.9', renewalPaid: true },
+                      { code: 'FR', status: 'VALIDATED', nationalRef: 'FR3904118', renewalPaid: true },
+                      { code: 'GB', status: 'VALIDATED', nationalRef: 'GB3904118', renewalPaid: true }
+                    ])
+              ).map((state: any, idx: number) => (
                 <div
-                  key={state.code}
+                  key={state.code || idx}
                   className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-1"
                 >
                   <div className="flex items-center justify-between">
@@ -438,7 +446,15 @@ export default function PatentDossierPage() {
         </p>
 
         <div className="border-l-2 border-slate-200 ml-3 pl-4 space-y-6 pt-2">
-          {(asset.legalEvents || []).map((ev, idx) => (
+          {(asset.legalEvents && asset.legalEvents.length > 0
+            ? asset.legalEvents
+            : (asset.inpadocEvents || []).map((ev: any) => ({
+                eventDate: ev.date,
+                eventCode: ev.code,
+                eventDescription: ev.title,
+                eventImpact: ev.ref
+              }))
+          ).map((ev: any, idx: number) => (
             <div key={idx} className="relative space-y-1 text-xs">
               <div className="absolute -left-[23px] top-1 w-3 h-3 rounded-full bg-slate-400 border-2 border-white" />
               <div className="flex items-center gap-2 flex-wrap">

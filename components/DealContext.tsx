@@ -80,8 +80,9 @@ export interface EvaluatedAsset extends SamplePatentRecord {
 
 export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: string): EvaluatedAsset {
   const auditDate = new Date();
-  const recordedOwner = patent.registeredProprietor;
+  const recordedOwner = patent.registeredProprietor || 'Unknown Recorded Proprietor';
   const similarity = computeSimilarity(recordedOwner, targetCompany);
+  const epoStatusStr = String(patent.epoStatus || 'GRANTED_ACTIVE').toUpperCase();
 
   // 1. Chain of Title (Art. 72 & Rule 22 EPC)
   let check1Status: 'CLEAN' | 'WARNING' | 'CRITICAL' = 'CLEAN';
@@ -116,23 +117,25 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
   };
 
   // 2. Maintenance & Renewal Fees (Art. 86 EPC)
-  const isLapsed = patent.annuityStatus === 'LAPSED_NON_PAYMENT' || patent.epoStatus.includes('LAPSED');
+  const annuityYear = patent.annuityYear ?? 5;
+  const annuityPaidThrough = patent.annuityPaidThrough || patent.nextAnnuityDueDate || '2026-12-31';
+  const isLapsed = patent.annuityStatus === 'LAPSED_NON_PAYMENT' || epoStatusStr.includes('LAPSED');
   const inGrace = patent.annuityStatus === 'GRACE_PERIOD_SURCHARGE';
 
   let check2Status: 'CLEAN' | 'WARNING' | 'CRITICAL' = 'CLEAN';
-  let check2Headline = `Year ${patent.annuityYear} Paid & In Force`;
-  let check2LawyerNote = `Annual renewal fee for Year ${patent.annuityYear} is fully settled. Right is active and in force through ${patent.annuityPaidThrough}.`;
+  let check2Headline = `Year ${annuityYear} Paid & In Force`;
+  let check2LawyerNote = `Annual renewal fee for Year ${annuityYear} is fully settled. Right is active and in force through ${annuityPaidThrough}.`;
   let check2Impact = 'No maintenance defect. Transfer upcoming docket deadlines to Buyer counsel at Closing.';
 
   if (isLapsed) {
     check2Status = 'CRITICAL';
     check2Headline = 'Lapsed / Dead Asset (Unpaid Fees)';
-    check2LawyerNote = `Patent has ceased to have legal effect due to non-payment of Year ${patent.annuityYear} renewal fees. The 6-month statutory grace period under Rule 51(2) EPC has expired.`;
+    check2LawyerNote = `Patent has ceased to have legal effect due to non-payment of Year ${annuityYear} renewal fees. The 6-month statutory grace period under Rule 51(2) EPC has expired.`;
     check2Impact = 'Remove asset from active IP schedule; reduce purchase price for loss of exclusivity.';
   } else if (inGrace) {
     check2Status = 'WARNING';
     check2Headline = 'Annuity Grace Period Open (Surcharge Due)';
-    check2LawyerNote = `Year ${patent.annuityYear} renewal fee is past its primary due date and currently in the 6-month statutory grace period requiring a 50% surcharge under Rule 51(2) EPC.`;
+    check2LawyerNote = `Year ${annuityYear} renewal fee is past its primary due date and currently in the 6-month statutory grace period requiring a 50% surcharge under Rule 51(2) EPC.`;
     check2Impact = 'Require Seller to settle overdue renewal plus 50% surcharge prior to Closing and provide official receipts.';
   }
 
@@ -148,10 +151,17 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
   };
 
   // 3. Post-Grant Opposition & Disputes (Art. 99 EPC)
-  const isOpposed = patent.oppositionStatus === 'ACTIVE_OPPOSITION_PROCEEDINGS' || patent.epoStatus.includes('OPPOSITION');
-  const grantDate = new Date(patent.grantDate);
-  const monthsSinceGrant = Math.max(0, Math.round((auditDate.getTime() - grantDate.getTime()) / (1000 * 60 * 60 * 24 * 30.4375)));
+  const isOpposed =
+    patent.oppositionStatus === 'ACTIVE_OPPOSITION_PROCEEDINGS' ||
+    patent.oppositionStatus === 'OPPOSITION_FILED_PENDING' ||
+    epoStatusStr.includes('OPPOSITION');
+  const parsedGrantDate = patent.grantDate ? new Date(patent.grantDate) : null;
+  const grantDateValid = parsedGrantDate && !isNaN(parsedGrantDate.getTime());
+  const monthsSinceGrant = grantDateValid
+    ? Math.max(0, Math.round((auditDate.getTime() - parsedGrantDate.getTime()) / (1000 * 60 * 60 * 24 * 30.4375)))
+    : 12;
   const oppWindowOpen = !isOpposed && monthsSinceGrant < 9;
+  const oppositionDetail = patent.oppositionDetail || 'Opposition proceedings flagged in patent register under Art. 99 EPC.';
 
   let check3Status: 'CLEAN' | 'WARNING' | 'CRITICAL' = 'CLEAN';
   let check3Headline = 'Opposition Window Closed Clean';
@@ -161,7 +171,7 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
   if (isOpposed) {
     check3Status = 'CRITICAL';
     check3Headline = 'Active Opposition / Validity Challenge';
-    check3LawyerNote = `Patent is currently contested under Art. 99 EPC before the EPO Opposition Division. ${patent.oppositionDetail}`;
+    check3LawyerNote = `Patent is currently contested under Art. 99 EPC before the EPO Opposition Division. ${oppositionDetail}`;
     check3Impact = 'Require Special Escrow Holdback (e.g. EUR 4.5M) and specific indemnity in SPA Section 9.02 pending final outcome.';
   } else if (oppWindowOpen) {
     check3Status = 'WARNING';
@@ -182,7 +192,18 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
   };
 
   // 4. Territorial Coverage & Validation (Art. 65 EPC / Unitary Patent)
-  const activeStates = (patent.designatedStates || []).filter(s => s.status === 'VALIDATED' || s.status === 'UNITARY_PATENT');
+  const normalizedStates: DesignatedStateRecord[] = (patent.designatedStates || []).map((s: any) => {
+    if (typeof s === 'string') {
+      return {
+        code: s,
+        status: patent.unitaryPatent ? 'UNITARY_PATENT' : 'VALIDATED',
+        nationalRef: `${s}${patent.id || ''}`,
+        renewalPaid: !isLapsed
+      };
+    }
+    return s;
+  });
+  const activeStates = normalizedStates.filter(s => s && (s.status === 'VALIDATED' || s.status === 'UNITARY_PATENT'));
   const stateCodes = activeStates.map(s => s.code);
   const isNarrow = !patent.unitaryPatent && activeStates.length < 3;
 
@@ -217,15 +238,17 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
   };
 
   // 5. Remaining Statutory Term (Art. 63(1) EPC)
-  const filingDate = new Date(patent.filingDate);
+  const parsedFilingDate = patent.filingDate ? new Date(patent.filingDate) : new Date('2020-01-01');
+  const filingDate = isNaN(parsedFilingDate.getTime()) ? new Date('2020-01-01') : parsedFilingDate;
   const expDate = new Date(filingDate);
   expDate.setFullYear(expDate.getFullYear() + 20);
   const diffMs = expDate.getTime() - auditDate.getTime();
   const monthsRemaining = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24 * 30.4375)));
   const yearsRemaining = Number((monthsRemaining / 12).toFixed(1));
+  const expIso = !isNaN(expDate.getTime()) ? expDate.toISOString().slice(0, 10) : '2040-01-01';
 
   let check5Status: 'CLEAN' | 'WARNING' | 'CRITICAL' = 'CLEAN';
-  let check5Headline = `${yearsRemaining} Years Remaining (Expires ${expDate.toISOString().slice(0, 10)})`;
+  let check5Headline = `${yearsRemaining} Years Remaining (Expires ${expIso})`;
   let check5LawyerNote = `${yearsRemaining} years (${monthsRemaining} months) of 20-year statutory patent runway remain under Art. 63(1) EPC.`;
   let check5Impact = 'Healthy exclusivity runway supports transaction valuation.';
 
@@ -472,14 +495,14 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
 
     const rows = evaluatedPortfolio.map((p, idx) => [
       `3.14(a)-${String(idx + 1).padStart(2, '0')}`,
-      p.id,
-      p.applicationNumber,
-      `"${p.title.replace(/"/g, '""')}"`,
-      `"${p.registeredProprietor.replace(/"/g, '""')}"`,
-      `"${targetCompany.replace(/"/g, '""')}"`,
+      p.id || '',
+      p.applicationNumber || '',
+      `"${(p.title || '').replace(/"/g, '""')}"`,
+      `"${(p.registeredProprietor || '').replace(/"/g, '""')}"`,
+      `"${(targetCompany || '').replace(/"/g, '""')}"`,
       p.overallRisk,
-      `"${p.primaryIssue.replace(/"/g, '""')}"`,
-      `"${p.recommendedAction.replace(/"/g, '""')}"`,
+      `"${(p.primaryIssue || '').replace(/"/g, '""')}"`,
+      `"${(p.recommendedAction || '').replace(/"/g, '""')}"`,
       p.yearsRemaining,
       p.unitaryPatent ? 'Yes' : 'No'
     ]);
@@ -489,7 +512,7 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `SPA_Schedule_3.14_${targetCompany.replace(/\s+/g, '_')}_IP_Audit.csv`;
+    link.download = `SPA_Schedule_3.14_${(targetCompany || 'Target').replace(/\s+/g, '_')}_IP_Audit.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

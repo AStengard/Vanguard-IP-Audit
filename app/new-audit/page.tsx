@@ -46,33 +46,10 @@ export default function NewAuditPage() {
   const [liveError, setLiveError] = useState<{ title: string; message: string; isMissingCredentials?: boolean } | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Preset Handlers
+  // Preset Handler (Project Aetheris — MedTech Deal)
   const handleLoadAetheris = () => {
     resetToShowcase();
     setSuccessMessage('Loaded Project Aetheris (12-patent M&A portfolio review) successfully.');
-    setTimeout(() => {
-      router.push('/overview');
-    }, 800);
-  };
-
-  const handleLoadBavaria = () => {
-    setTargetCompany('Bavaria BioPharma AG');
-    setSuccessMessage('Updated Target Company to "Bavaria BioPharma AG". All 12 patents re-evaluated.');
-    setTimeout(() => {
-      router.push('/overview');
-    }, 800);
-  };
-
-  const handleLoadCleanBaseline = () => {
-    const cleanPortfolio: SamplePatentRecord[] = SAMPLE_MA_PATENTS.map((p) => ({
-      ...p,
-      registeredProprietor: DEFAULT_TARGET_COMPANY,
-      mismatchCategory: 'PERFECT_MATCH',
-      oppositionStatus: 'NONE'
-    }));
-    setTargetCompany(DEFAULT_TARGET_COMPANY);
-    setPortfolioData(cleanPortfolio);
-    setSuccessMessage('Loaded 100% Verified Clean baseline portfolio.');
     setTimeout(() => {
       router.push('/overview');
     }, 800);
@@ -129,26 +106,66 @@ export default function NewAuditPage() {
       }
 
       // Convert audited records to portfolio items
+      const cleanLiveTarget = liveTargetName.trim() || 'Target Company';
       const livePatents: SamplePatentRecord[] = (data.auditedRecords || []).map((rec: any, idx: number) => {
         const id = rec.epodoc || rec.docdb || rec.rawInput || `EP-${idx + 1}`;
         const owner = rec.applicants?.[0] || 'Unknown Recorded Owner';
+        const isMatch = owner.toLowerCase().includes(cleanLiveTarget.toLowerCase());
+        const isOpposed = Boolean(rec.oppositionPending);
+        const jurisdictions: string[] = Array.isArray(rec.familyJurisdictions) && rec.familyJurisdictions.length > 0
+          ? rec.familyJurisdictions
+          : ['DE', 'FR', 'GB'];
+        const filingDate = rec.filingDate || '2020-01-01';
+        const grantDate = rec.grantDate || '2023-01-01';
+        const filingYear = parseInt(filingDate.slice(0, 4), 10) || 2020;
+
         return {
           id,
           title: rec.title || 'European Patent Asset',
           applicationNumber: rec.docdb || id,
-          filingDate: rec.filingDate || '2020-01-01',
-          grantDate: rec.grantDate || '2023-01-01',
+          ipcClass: rec.cpcClasses?.[0] || 'A61B 17/00',
+          filingDate,
+          priorityDate: filingDate,
+          grantDate,
+          expirationDate: `${filingYear + 20}${filingDate.slice(4)}`,
           registeredProprietor: owner,
-          mismatchCategory: owner.toLowerCase().includes(liveTargetName.toLowerCase())
-            ? 'PERFECT_MATCH'
-            : 'FOUNDER_PERSONAL_OWNERSHIP',
+          proprietorAddress: 'Recorded in European Patent Register',
+          disclosedOwnerSchedule: cleanLiveTarget,
+          inventors: Array.isArray(rec.inventors) && rec.inventors.length > 0 ? rec.inventors : ['Recorded Inventor'],
+          epoStatus: isOpposed ? 'OPPOSITION_PENDING' : 'GRANTED_ACTIVE',
+          epoStatusCode: isOpposed ? 'PG25 / OPPOSITION' : 'PG25 / REG',
+          mismatchCategory: isMatch ? 'PERFECT_MATCH' : 'FOUNDER_PERSONAL_OWNERSHIP',
+          annuityYear: Math.max(1, new Date().getFullYear() - filingYear),
+          annuityStatus: 'PAID_CURRENT',
+          annuityPaidThrough: '2026-06-30',
           lastAnnuityPaidDate: '2025-01-01',
           nextAnnuityDueDate: '2026-06-30',
           nextAnnuityAmountEur: 980,
           unitaryPatent: false,
-          designatedStates: rec.familyJurisdictions || ['DE', 'FR', 'GB'],
-          oppositionStatus: rec.oppositionPending ? 'OPPOSITION_FILED_PENDING' : 'NONE',
+          designatedStates: jurisdictions.map((code: string) => ({
+            code,
+            status: 'VALIDATED' as const,
+            nationalRef: `${code}${id}`,
+            renewalPaid: true
+          })),
+          oppositionStatus: isOpposed ? 'ACTIVE_OPPOSITION_PROCEEDINGS' : 'NO_OPPOSITION_EXPIRED',
+          oppositionDetail: isOpposed
+            ? 'Active opposition proceeding detected in EPO Register under Art. 99 EPC.'
+            : 'No active opposition recorded in EPO Register.',
+          productLine: 'Audited Target Patent Portfolio',
+          revenueAttributionPct: Math.round(100 / Math.max((data.auditedRecords || []).length, 1)),
+          baseRiskCategory: !isMatch || isOpposed ? 'CRITICAL' : 'CLEAN',
+          legalSummary: `Live EPO OPS registry retrieval for ${id}. Recorded proprietor: ${owner}.`,
+          spaRemediationClause: !isMatch
+            ? `CLOSING CONDITION PRECEDENT: Require executed Art. 72 EPC Confirmatory Deed of Assignment transferring ${id} from ${owner} to ${cleanLiveTarget} prior to Closing.`
+            : `STANDARD WARRANTY SUFFICIENT: Include ${id} under Schedule 3.14(a) subject to Section 4.14 IP ownership representations.`,
           cpcClass: rec.cpcClasses?.[0] || 'A61B',
+          inpadocEvents: (rec.legalEvents || []).map((ev: any) => ({
+            date: ev.date || '2024-01-01',
+            code: ev.code || 'REG',
+            title: ev.desc || 'EPO Register status event',
+            ref: 'EPO OPS Register'
+          })),
           legalEvents: (rec.legalEvents || []).map((ev: any) => ({
             eventDate: ev.date || '2024-01-01',
             eventCode: ev.code || 'REG',
@@ -264,56 +281,6 @@ export default function NewAuditPage() {
               >
                 <span>Load Scenario</span>
                 <ArrowRight className="w-4 h-4 text-emerald-400" />
-              </button>
-            </div>
-
-            {/* Scenario 2: Alternate Entity Re-Scoring */}
-            <div className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-slate-900">
-                    Bavaria BioPharma AG Acquisition Test
-                  </span>
-                </div>
-                <div className="text-xs text-slate-500">
-                  Target Company: <strong className="text-slate-700">Bavaria BioPharma AG</strong>
-                </div>
-                <p className="text-xs text-slate-600 font-serif max-w-xl">
-                  Demonstrates dynamic chain-of-title recalculation. Tests how the similarity scoring engine flags patents when evaluating an acquisition under a different corporate buyer entity.
-                </p>
-              </div>
-
-              <button
-                onClick={handleLoadBavaria}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold transition shadow-2xs cursor-pointer shrink-0"
-              >
-                <span>Set Target Entity</span>
-                <ArrowRight className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
-
-            {/* Scenario 3: Clean Baseline */}
-            <div className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition">
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-sm text-slate-900">
-                    Clean Baseline Audit (Zero Red Flags)
-                  </span>
-                </div>
-                <div className="text-xs text-slate-500">
-                  Target Company: <strong className="text-slate-700">Aetheris MedTech GmbH</strong>
-                </div>
-                <p className="text-xs text-slate-600 font-serif max-w-xl">
-                  Demonstrates a 100% clean diligence audit where all recorded proprietors match the target company and all maintenance fees are current.
-                </p>
-              </div>
-
-              <button
-                onClick={handleLoadCleanBaseline}
-                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold transition shadow-2xs cursor-pointer shrink-0"
-              >
-                <span>Load Clean Baseline</span>
-                <ArrowRight className="w-4 h-4 text-slate-500" />
               </button>
             </div>
           </div>
