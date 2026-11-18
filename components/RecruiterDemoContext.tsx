@@ -30,7 +30,7 @@ export const DEMO_STEPS: DemoStep[] = [
     stepNumber: 1,
     label: "Step 1/5: Loading Target Entity",
     title: "Target Ingestion & Auto-Fill",
-    description: "Simulating form entry for Aetheris MedTech GmbH & 5 European patent numbers.",
+    description: "Simulating form entry for Aetheris MedTech GmbH & 12 European patent numbers.",
     path: "/",
     duration: 11,
   },

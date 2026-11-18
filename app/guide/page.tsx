@@ -46,7 +46,7 @@ export default function GuidePage() {
           How Vanguard IP Audit Works
         </h1>
         <p className="text-sm text-slate-600 leading-relaxed max-w-3xl">
-          A non-technical guide designed for corporate M&amp;A attorneys, patent counsel, and legal recruiters. 
+          A non-technical guide designed for corporate M&amp;A attorneys, patent counsel, and legal recruiters.
           Learn how automated statutory diligence prevents multimillion-euro patent ownership disputes in European acquisitions.
         </p>
       </div>
@@ -220,7 +220,7 @@ export default function GuidePage() {
           <div className="bg-slate-800/80 border border-slate-700 p-4 rounded-xl space-y-1.5">
             <div className="text-emerald-400 font-bold">2. Portfolio Schedule 3.14</div>
             <p className="text-slate-300 leading-relaxed">
-              Browse the full 12-patent disclosure schedule with instant search and filter pills. See title ownership matches and primary statutory issues.
+              Browse the full patent disclosure schedule with instant search and filter pills. See title ownership matches and primary statutory issues.
             </p>
           </div>
 

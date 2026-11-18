@@ -29,7 +29,7 @@ import AuditScannerModal, {
   SCANNER_MIN_DURATION_MS,
   LiveScanFlags
 } from '@/components/AuditScannerModal';
-import { SamplePatentRecord } from '@/lib/sampleDeal';
+import { SamplePatentRecord, SAMPLE_MA_PATENTS } from '@/lib/sampleDeal';
 
 export default function LandingPortalPage() {
   const router = useRouter();
@@ -159,16 +159,16 @@ export default function LandingPortalPage() {
     const timeouts: NodeJS.Timeout[] = [];
 
     const TARGET_NAME = 'Aetheris MedTech GmbH';
-    const PATENTS_SCHEDULE = 'EP3904118, EP3800201, EP3654120, EP3491024, EP3312890';
+    const PATENTS_SCHEDULE = SAMPLE_MA_PATENTS.map((p) => p.id).join(', ');
 
     // Start with blank inputs
     setCustomTarget('');
     setCustomPatentText('');
     setShowSyntheticPointer(false);
 
-    const targetCharDelay = 75 / playbackSpeed;
-    const pauseBeforePatents = 600 / playbackSpeed;
-    const patentCharDelay = 45 / playbackSpeed;
+    const targetCharDelay = 55 / playbackSpeed;
+    const pauseBeforePatents = 400 / playbackSpeed;
+    const patentCharDelay = 20 / playbackSpeed;
 
     // 1. Type target entity character-by-character
     for (let i = 1; i <= TARGET_NAME.length; i++) {
@@ -211,7 +211,7 @@ export default function LandingPortalPage() {
 
   // Quick helper to fill sample numbers
   const handleInsertSampleNumbers = () => {
-    setCustomPatentText('EP3904118, EP3800201, EP3654120, EP3491024, EP3312890');
+    setCustomPatentText(SAMPLE_MA_PATENTS.map((p) => p.id).join(', '));
     setCustomTarget('Aetheris MedTech GmbH');
   };
 
@@ -542,7 +542,7 @@ export default function LandingPortalPage() {
               </div>
 
               <textarea
-                rows={3}
+                rows={4}
                 value={customPatentText}
                 onChange={(e) => setCustomPatentText(e.target.value)}
                 placeholder="Enter EP numbers (e.g. EP3904118, EP3800201, EP3654120)..."

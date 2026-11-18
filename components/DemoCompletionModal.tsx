@@ -61,7 +61,7 @@ export default function DemoCompletionModal() {
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                Audit Complete — 5 Assets Verified
+                Audit Complete — 12 Assets Verified
               </h2>
               <p className="text-xs text-emerald-400 font-medium mt-0.5">
                 European Patent Convention (EPC) Statutory Diligence Executed
@@ -85,14 +85,14 @@ export default function DemoCompletionModal() {
             <div className="flex items-center justify-between">
               <span className="font-bold text-rose-300 flex items-center gap-1.5">
                 <ShieldAlert className="w-4 h-4 text-rose-400" />
-                <span>Art. 72 EPC Title Break</span>
+                <span>Art. 72 EPC Title Breaks (2)</span>
               </span>
               <span className="font-mono text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
                 Critical
               </span>
             </div>
             <p className="text-[11px] text-slate-300 font-serif leading-snug">
-              Unrecorded academic assignment to university. Closing CP § 7.02(f) generated requiring confirmatory assignment.
+              Unrecorded university transfer (Charité Berlin) and founder ownership (Dr. Lukas Vance). Closing CPs generated requiring confirmatory assignments.
             </p>
           </div>
 
@@ -104,11 +104,11 @@ export default function DemoCompletionModal() {
                 <span>Art. 86 Maintenance</span>
               </span>
               <span className="font-mono text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Lapse Window
+                1 Lapsed
               </span>
             </div>
             <p className="text-[11px] text-slate-300 font-serif leading-snug">
-              Year 6 missed annuity in 6-month surcharge grace period (Rule 51(2) EPC). Seller payoff covenant attached.
+              Statutory lapse detected on EP3305198B1 after expired Rule 51(2) EPC grace period. Flagged for exclusion &amp; purchase price adjustment.
             </p>
           </div>
 
@@ -117,14 +117,14 @@ export default function DemoCompletionModal() {
             <div className="flex items-center justify-between">
               <span className="font-bold text-amber-300 flex items-center gap-1.5">
                 <Scale className="w-4 h-4 text-amber-400" />
-                <span>Art. 99 Oppositions</span>
+                <span>Art. 99 Opposition</span>
               </span>
               <span className="font-mono text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Pending
+                Active
               </span>
             </div>
             <p className="text-[11px] text-slate-300 font-serif leading-snug">
-              Revocation challenge pending by Siemens Healthcare. Indemnity and escrow retention allocated.
+              Active revocation challenge pending on EP3589102B1 before the EPO Opposition Division. Escrow holdback and indemnity allocated.
             </p>
           </div>
 

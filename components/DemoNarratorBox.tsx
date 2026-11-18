@@ -29,7 +29,7 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
     tagColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
     icon: Database,
     title: "Automated Target & Portfolio Ingestion",
-    body: "The auditor simulates ingestion of target entity 'Aetheris MedTech GmbH' and 5 European patent assets, preparing to cross-examine company disclosures against official European Patent Register records.",
+    body: "The auditor simulates ingestion of target entity 'Aetheris MedTech GmbH' and all 12 European patent assets, preparing to cross-examine company disclosures against official European Patent Register records.",
     dealImpact: "Buyers routinely discover target companies don't legally own the patents disclosed on Schedule 3.14 due to missing written assignment deeds.",
   },
   1: {
@@ -59,7 +59,7 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
     tagColor: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
     icon: FileText,
     title: "Schedule 3.14 Portfolio Breakdown",
-    body: "Displaying the complete audited patent schedule with legal standing, national validation status across DE/FR/GB/IT, Unitary Patent coverage, and Rule 51(2) renewal grace periods.",
+    body: "Displaying the complete 12-asset audited patent schedule with legal standing, national validation status across DE/FR/GB/IT, Unitary Patent coverage, and Rule 51(2) renewal grace periods.",
     dealImpact: "Generates audit-ready Schedule 3.14 disclosures for the Share Purchase Agreement (SPA) and provides instant 1-click CSV spreadsheet export for investment committees.",
   },
   4: {

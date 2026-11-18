@@ -136,20 +136,12 @@ export default function OverviewPage() {
           </button>
 
           <Link
-            href="/memo"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs shadow-2xs transition"
-          >
-            <FileText className="w-4 h-4 text-emerald-600" />
-            <span>Executive Memo (PDF)</span>
-          </Link>
-
-          <Link
             href="/history"
             className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
             title="View saved scans in Audit History"
           >
             <History className="w-4 h-4 text-slate-500" />
-            <span>Audit Vault</span>
+            <span>Audit History</span>
           </Link>
 
           <Link
@@ -311,11 +303,10 @@ export default function OverviewPage() {
                 return (
                   <div
                     key={asset.id}
-                    className={`bg-white rounded-2xl p-5 shadow-xs flex flex-col justify-between transition-all duration-500 h-full ${
-                      isDemoActive && currentStepIndex === 2
-                        ? 'border-2 border-rose-300 bg-gradient-to-b from-rose-50/40 to-white'
-                        : 'border border-rose-200 hover:border-rose-300'
-                    }`}
+                    className={`bg-white rounded-2xl p-5 shadow-xs flex flex-col justify-between transition-all duration-500 h-full ${isDemoActive && currentStepIndex === 2
+                      ? 'border-2 border-rose-300 bg-gradient-to-b from-rose-50/40 to-white'
+                      : 'border border-rose-200 hover:border-rose-300'
+                      }`}
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2">
@@ -434,13 +425,12 @@ export default function OverviewPage() {
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${
-                          isCritical
-                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                            : isWarning
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${isCritical
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : isWarning
                             ? 'bg-amber-50 text-amber-800 border border-amber-200'
                             : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                        }`}
+                          }`}
                       >
                         {asset.primaryIssue}
                       </span>
