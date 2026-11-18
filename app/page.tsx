@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -59,14 +59,74 @@ export default function LandingPortalPage() {
     modeBadge?: string;
     footerTag?: string;
   } | null>(null);
+  const [isFormHighlighted, setIsFormHighlighted] = useState(false);
+  const targetInputRef = useRef<HTMLInputElement | null>(null);
+  const highlightTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (highlightTimerRef.current) {
+        clearTimeout(highlightTimerRef.current);
+      }
     };
   }, []);
+
+  // Triggered when clicking "New Audit" from Navbar or other pages:
+  // clears form, scrolls directly to the form, focuses the input, and pulses a crisp emerald ring.
+  const triggerNewAuditFocus = useCallback(() => {
+    setCustomTarget('');
+    setCustomPatentText('');
+    setApiError(null);
+    setIsFormHighlighted(true);
+
+    const formEl = document.getElementById('custom-audit-form-section');
+    if (formEl) {
+      const yOffset = -90;
+      const y = formEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    }
+
+    setTimeout(() => {
+      targetInputRef.current?.focus({ preventScroll: true });
+    }, 240);
+
+    if (highlightTimerRef.current) {
+      clearTimeout(highlightTimerRef.current);
+    }
+    highlightTimerRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        setIsFormHighlighted(false);
+      }
+    }, 1400);
+  }, []);
+
+  useEffect(() => {
+    // Handle cross-page navigation from "New Audit"
+    try {
+      if (sessionStorage.getItem('vanguard_focus_new_audit') === '1') {
+        sessionStorage.removeItem('vanguard_focus_new_audit');
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            triggerNewAuditFocus();
+          }
+        }, 120);
+      }
+    } catch {
+      // Ignore storage restrictions
+    }
+
+    // Handle same-page "New Audit" clicks while already on "/"
+    const handleNewAuditEvent = () => {
+      triggerNewAuditFocus();
+    };
+    window.addEventListener('vanguard:new-audit', handleNewAuditEvent);
+    return () => {
+      window.removeEventListener('vanguard:new-audit', handleNewAuditEvent);
+    };
+  }, [triggerNewAuditFocus]);
 
   // --------------------------------------------------------------------------
   // RECRUITER AUTO-DEMO: STEP 1 AUTO-SCROLL TO INPUT FORM
@@ -271,7 +331,7 @@ export default function LandingPortalPage() {
           legalSummary: `Live EPO OPS registry retrieval for ${id}. Recorded proprietor: ${owner}.`,
           spaRemediationClause: !isMatch
             ? `CLOSING CONDITION PRECEDENT: Require executed Art. 72 EPC Confirmatory Deed of Assignment transferring ${id} from ${owner} to ${cleanTargetName} prior to Closing.`
-            : `STANDARD WARRANTY SUFFICIENT: Include ${id} under Schedule 3.14(a) subject to Section 4.14 IP ownership representations.`,
+            : `STANDARD WARRANTY SUFFICIENT: Include ${id} under Schedule 3.14(a) subject to Section 3.14 IP ownership representations.`,
           cpcClass: rec.cpcClasses?.[0] || 'A61B',
           inpadocEvents: (rec.legalEvents || []).map((ev: any) => ({
             date: ev.date || '2024-01-01',
@@ -425,14 +485,24 @@ export default function LandingPortalPage() {
       <div className="max-w-3xl mx-auto">
         <div
           id="custom-audit-form-section"
-          className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-24"
+          className={`bg-white rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 scroll-mt-24 transition-all duration-300 ${
+            isFormHighlighted
+              ? 'border-2 border-emerald-500 ring-4 ring-emerald-500/20 shadow-lg'
+              : 'border border-slate-200'
+          }`}
         >
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-900 text-white">
                 Live EPO Register API
               </span>
-              <span className="text-xs text-slate-400 font-semibold">OPS v3.2 REST</span>
+              <span className="text-xs text-slate-400 font-semibold">
+                {isFormHighlighted ? (
+                  <span className="text-emerald-600 font-bold">Ready for new audit</span>
+                ) : (
+                  'OPS v3.2 REST'
+                )}
+              </span>
             </div>
             <h2 className="text-xl font-extrabold text-slate-900">
               Run a Live EPO Transaction Audit
@@ -458,6 +528,7 @@ export default function LandingPortalPage() {
               <div className="relative">
                 <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
+                  ref={targetInputRef}
                   type="text"
                   value={customTarget}
                   onChange={(e) => setCustomTarget(e.target.value)}

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   FileText,
   HelpCircle,
@@ -16,8 +16,26 @@ import { useRecruiterDemo } from './RecruiterDemoContext';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { savedAudits } = useDeal();
-  const { startDemo, isDemoActive } = useRecruiterDemo();
+  const { startDemo, exitDemo, isDemoActive } = useRecruiterDemo();
+
+  const handleNewAudit = () => {
+    if (isDemoActive) {
+      exitDemo();
+    }
+
+    if (pathname === '/') {
+      window.dispatchEvent(new CustomEvent('vanguard:new-audit'));
+    } else {
+      try {
+        sessionStorage.setItem('vanguard_focus_new_audit', '1');
+      } catch {
+        // Ignore storage restrictions
+      }
+      router.push('/');
+    }
+  };
 
   const navLinks = [
     { href: '/overview', label: 'Overview', icon: LayoutDashboard },
@@ -103,16 +121,15 @@ export default function Navbar() {
           </button>
 
           {/* New Audit CTA Button */}
-          <Link
-            href="/"
-            className={`inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-bold shadow-xs transition shrink-0 ${pathname === '/'
-                ? 'bg-slate-900 text-white ring-2 ring-emerald-500/30'
-                : 'bg-slate-900 hover:bg-slate-800 text-white'
-              }`}
+          <button
+            type="button"
+            onClick={handleNewAudit}
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-xl text-xs font-bold shadow-xs transition shrink-0 bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white cursor-pointer"
+            title="Start a fresh live EPO transaction audit"
           >
             <Plus className="w-3.5 h-3.5 text-emerald-400" />
             <span>New Audit</span>
-          </Link>
+          </button>
         </div>
       </div>
     </header>

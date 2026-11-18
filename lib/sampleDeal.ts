@@ -91,7 +91,7 @@ export const SAMPLE_MA_PATENTS: SamplePatentRecord[] = [
     legalSummary:
       'Core commercial blocking patent covering the AetherPulse basket catheter geometry. Chain of title is properly recorded in the European Patent Register under Rule 22 EPC. National validations and Year 10 renewals are paid and current in all 7 key European markets.',
     spaRemediationClause:
-      'STANDARD WARRANTY SUFFICIENT: Include EP3412890B1 under Schedule 3.14(a) (Core Material Registered IP). Subject to standard Seller representation under Section 4.14(b) confirming valid subsistence and absence of encumbrances.',
+      'STANDARD WARRANTY SUFFICIENT: Include EP3412890B1 under Schedule 3.14(a) (Core Material Registered IP). Subject to standard Seller representation under Section 3.14(b) confirming valid subsistence and absence of encumbrances.',
     inpadocEvents: [
       { date: '2017-07-14', code: 'AK', title: 'PCT Application Filed (EP Regional Phase Entry)', ref: 'PCT/EP2017/067812' },
       { date: '2021-04-21', code: 'AK/PG25', title: 'Mention of Grant Published in European Patent Bulletin 21/16', ref: 'Art. 97(3) EPC' },

@@ -44,7 +44,7 @@ export default function PatentDossierPage() {
       `// Target Entity: ${targetCompany}\n` +
       `// Recorded Proprietor: ${asset.registeredProprietor}\n` +
       `// Finding: ${asset.primaryIssue}\n\n` +
-      `Section 4.14 [Remediation Undertaking / Condition Precedent]:\n` +
+      `Section 3.14 [Remediation Undertaking / Condition Precedent]:\n` +
       `"${asset.recommendedAction} The Sellers shall, at their sole cost and expense, execute all confirmatory deeds, EPO Form 5055 filings, and national register corrections prior to the Closing Date as a Condition Precedent under Section 3.01."`;
 
     navigator.clipboard.writeText(clauseText);

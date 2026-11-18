@@ -1,53 +1,62 @@
-﻿# Vanguard IP Audit — M&A and Venture Capital Patent Due Diligence Auditor
+# Vanguard IP Audit — European Patent M&A Due Diligence Suite
 
-> **Enterprise Legal Tech Portfolio Project** | Powered by the **European Patent Office (EPO) Open Patent Services (OPS) REST API v3.2**, **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS**.
+> **Legal Tech Portfolio Project by [Alfred Stengard](https://astengard.github.io/cv/)** | Built with **Next.js 15 (App Router)**, **React 19**, **TypeScript**, **Tailwind CSS**, and the **European Patent Office (EPO) Open Patent Services (OPS) REST API v3.2**.
 
 ---
 
 ## 1. Executive Overview: The Real-World M&A Legal Bottleneck
 
-In technology, medtech, and life-sciences M&A transactions (as well as Series B/C venture capital financings), the Seller provides an **Intellectual Property Disclosure Schedule (typically Schedule 3.14 of the Share Purchase Agreement)** listing dozens of European patents represented as *"solely owned, validly subsisting, and in full force and effect."*
+In European life sciences and deep-tech acquisitions, patents often represent up to **70%–90% of a target company's enterprise value**. Yet deal teams still rely on manual, error-prone cross-checks between seller-prepared disclosure schedules (**SPA Schedule 3.14**), the **European Patent Register**, and fragmented national patent offices.
 
-In practice, M&A IP associates and patent attorneys spend dozens of billable hours manually cross-checking each patent number across **Espacenet**, the **European Patent Register**, and **INPADOC Legal Status** tables—frequently uncovering deal-critical defects days before signing:
-- **Unrecorded Assignments (Chain-of-Title Breaks)**: Patents developed via university sponsored research or by co-founders personally that were never formally assigned in writing under **Article 72 EPC** or recorded under **Rule 22 EPC**.
-- **Silent Statutory Lapses**: Patents listed as "Active" on Seller schedules that actually lapsed months earlier due to missed annual renewal fees and expired 6-month grace periods (**Article 86 & Rule 51(2) EPC**).
-- **Active Post-Grant Oppositions**: Core commercial patents facing pending **Article 99 EPC** revocation proceedings initiated by competitors, or newly granted `B1` patents still inside the vulnerable 9-month opposition window.
+Manual verification across dozens of patent families routinely consumes **substantial billable hours per transaction**—and still risks missing high-stakes statutory defects:
+- **Unrecorded Assignments (Art. 72 EPC):** Patents still registered to a founder or university tech-transfer office, leaving core IP stranded outside the target entity.
+- **Patents in Grace Periods (Rule 51(2) EPC):** Missed renewal fees sitting inside the EPO's 6-month surcharge window that will permanently lapse if not cured before closing.
+- **Central Oppositions (Art. 99 EPC):** Active competitor oppositions threatening to revoke protection across up to 39 EPC contracting states in a single proceeding.
 
-**Vanguard IP Audit** eliminates this manual bottleneck. It ingests raw patent lists or VDR spreadsheets, queries the official **EPO OPS v3.2 REST API** through a zero-leakage server proxy, evaluates every asset across **5 statutory M&A risk pillars**, and generates partner-ready **Executive Due Diligence Memoranda (Print/PDF)** and **SPA Disclosure Schedules (CSV)** in one click.
+**Vanguard IP Audit** automates this preliminary legal diligence workflow. It queries the official **EPO OPS v3.2 REST API** through a zero-leakage server proxy, evaluates every patent across **5 statutory EPC risk pillars**, and generates partner-ready **Executive Due Diligence Memoranda (Print/PDF)**, **Individual Patent Dossiers with copyable SPA clauses**, and **Schedule 3.14 CSV spreadsheets**.
 
 ---
 
-## 2. Key Legal Due Diligence Features
+## 2. Core Features
 
-### A. Automated 5-Pillar Statutory Rules Engine (`lib/riskAnalyzer.ts`)
-1. **Chain of Title & Ownership Verification (Art. 72 & Rule 22 EPC)**:
-   - Strips corporate suffixes (`GmbH`, `AG`, `Ltd`, `Inc`, `AB`, `SAS`, `BV`, `S.r.l.`) and runs fuzzy string similarity matching (token overlap + Levenshtein edit distance) between the EPO Register proprietor and the acquirer's **Target Company Legal Name**.
-   - Flags `CRITICAL` (*"Chain of Title Mismatch"*) when title remains registered to a university, prior entity, or individual founder.
-2. **Maintenance & Renewal Fee Standing (Art. 86 & Rule 51(2) EPC)**:
-   - Parses INPADOC legal status event codes (`PGFP`, `LAP`, `REV`, `WDR`, `PAYR`) to verify whether annual renewal fees are paid and current.
-   - Flags `CRITICAL` (*"Lapsed / Inactive Right"*) if the patent is dead or abandoned.
-3. **Post-Grant Opposition & Dispute Detection (Art. 99 & Art. 101 EPC)**:
-   - Inspects EP Register procedural events and `B1` grant dates.
-   - Flags `CRITICAL` (*"Active Opposition / Validity Challenge"*) if a third-party opposition has been filed, and `WARNING` (*"Within 9-Month Opposition Window"*) if granted fewer than 9 months ago.
-4. **Territorial Coverage & European Validation Check (Art. 65 EPC & Reg. 1257/2012)**:
-   - Evaluates INPADOC family jurisdictions (`DE`, `FR`, `GB`, `CH`, `NL`, `IT`, `SE`) and Unitary Patent (`UP`) registration.
-   - Flags `WARNING` (*"Narrow European Validation"*) if a granted EP patent was validated in fewer than 3 contracting states without Unitary Effect.
-5. **Remaining Statutory Patent Term (Art. 63(1) EPC)**:
-   - Calculates the 20-year statutory expiration date from the earliest filing date and flags `WARNING` (*"Near-Term Expiration"*) when fewer than 3 years remain.
+### A. Interactive Recruiter Demo (Project Aetheris — 12 EP Assets)
+Designed so recruiters, M&A partners, and reviewers can explore the complete workflow immediately with **no API keys required**:
+- **Compact Landing Launcher & Navbar Trigger:** Starts a 5-step guided walkthrough using the pre-configured **Project Aetheris (Aetheris MedTech GmbH)** 12-patent acquisition portfolio.
+- **Self-Paced by Default:** Starts **paused** with dedicated **Back / Next** step buttons, optional **Play / Pause** auto-advance, **1x / 2x** speed toggle, clickable progress segments, and `Esc` to exit.
+- **5-Step Guided Walkthrough:**
+  1. **Target Ingestion (`/`):** Auto-scrolls to the audit form and simulates target company & patent schedule input with a glowing submit trigger.
+  2. **Real-Time EPO Audit Scanner Modal:** Runs an 8-second animated statutory scan across all 5 modules, revealing `Flagged` / `Verified` statuses only as each check completes.
+  3. **Statutory Risk Scorecard (`/overview`):** Spotlights all **4 Critical Red Flags** together in a balanced 2×2 grid (2 Art. 72 title breaks, 1 Art. 99 opposition, 1 Art. 86 statutory lapse) with a floating Tour Commentary card.
+  4. **Schedule 3.14 Portfolio Table (`/portfolio`):** Searchable and filterable patent breakdown with Unitary Patent (`UP`) vs. classic national validation coverage and CSV export.
+  5. **Executive Memo & SPA Covenants (`/memo`):** Formal print/PDF law firm memorandum with **Section 3.14** warranties, Closing Conditions Precedent, Specific Indemnities, and completion summary card.
 
-### B. 1-Click Law Firm Deliverable Exports
-- **Download Executive Memo (Print / PDF)**: Generates a print-formatted M&A IP Due Diligence Summary Report containing the Target Company name, audit timestamp, Executive Risk Summary table, and itemized Red Flag Schedule with plain-English **Lawyer's Notes** and draft **SPA Remediation Clauses** (Conditions Precedent, Special Escrow Holdbacks, and Valuation Adjustments).
-- **Download CSV Schedule**: Exports a structured spreadsheet suitable for attaching directly to an M&A Share Purchase Agreement (SPA) IP Disclosure Schedule.
+### B. Live EPO OPS v3.2 API Integration
+- **Direct Live Queries (`/`):** Enter any target company name and up to 15 real European patent numbers to query the official European Patent Office (`/number-service`, `/biblio`, `/legal`, `/family`, `/register`).
+- **Real-Time Live Scanner Modal:** Displays the animated 5-module Audit Scanner (minimum 8-second scan cadence matching the demo) and dynamically reveals real `Flagged` or `Verified` pillar results from the live EPO records before routing to `/overview`.
+- **Smart `New Audit` Action:** Clicking **New Audit** from any page clears previous inputs, scrolls smoothly to the live audit form, focuses the Target Company input, and flashes a subtle confirmation ring.
+
+### C. Automated 5-Pillar Statutory EPC Rules Engine
+1. **Chain of Title & Ownership Verification (Art. 72 & Rule 22 EPC):** Strips corporate suffixes (`GmbH`, `AG`, `Ltd`, `Inc`, `AB`, `SAS`, `BV`, `S.r.l.`) and runs fuzzy entity similarity matching between the recorded EPO proprietor and the Target Company Legal Entity.
+2. **Maintenance & Renewal Fee Standing (Art. 86 & Rule 51(2) EPC):** Tracks renewal standing, active 6-month surcharge grace periods, and lapsed assets.
+3. **Post-Grant Opposition & Dispute Detection (Art. 99 & Art. 101 EPC):** Flags pending competitor oppositions and newly granted `B1` patents still inside the 9-month opposition window.
+4. **Territorial Coverage & European Validation Check (Art. 65 EPC & Reg. 1257/2012):** Distinguishes **Unitary Patents (17 EU Member States)** from classic national validations (`DE`, `FR`, `GB`, `CH`, `NL`, `IT`, `SE`) and flags narrow footprints.
+5. **Remaining Statutory Patent Term (Art. 63(1) EPC):** Calculates exact remaining 20-year statutory runway and flags near-term expirations (< 3 years).
+
+### D. Law Firm Deliverables & Audit History Vault
+- **Executive Legal Due Diligence Memorandum (`/memo`):** Print-ready PDF memorandum with aligned **Section 3.14** warranties and **Schedule 3.14** patent disclosures, Conditions Precedent, and Post-Closing Integration Covenants.
+- **Individual Patent Dossiers (`/patent/[id]`):** Complete 5-pillar legal scorecard, national validation grid, INPADOC legal events timeline, and 1-click **Copy SPA Draft Clause**.
+- **Schedule 3.14 CSV Export:** Available directly on Overview, Portfolio Schedule, Executive Memo, Audit History, and the Demo Completion summary.
+- **Audit History & Deal Vault (`/history`):** Persists completed audits in browser `localStorage` with re-open, rename, CSV export, and delete actions.
 
 ---
 
 ## 3. Zero-Leakage Security Architecture
 
-This repository is engineered so the source code can be published publicly on GitHub while keeping EPO OAuth2 credentials (`EPO_OPS_CONSUMER_KEY` and `EPO_OPS_SECRET`) 100% private on the server.
+EPO OAuth2 credentials (`EPO_OPS_CONSUMER_KEY` and `EPO_OPS_SECRET`) stay 100% server-side and are never exposed to the client bundle.
 
 ```text
 +-------------------------------------------------------------------------+
-| CLIENT BROWSER (Next.js App Router UI - app/page.tsx)                   |
+| CLIENT BROWSER (Next.js App Router UI)                                  |
 | - Zero API keys in client bundle (NEXT_PUBLIC_ is strictly forbidden)   |
 | - Sends { targetCompanyName, patentNumbers[] } via HTTPS POST           |
 +------------------------------------+------------------------------------+
@@ -56,7 +65,7 @@ This repository is engineered so the source code can be published publicly on Gi
 +-------------------------------------------------------------------------+
 | SERVER-ONLY API ROUTE (app/api/audit/route.ts)                          |
 | - Enforces In-Memory IP Rate Limiting (Max 10 req/IP/hr, 15/batch)      |
-| - Reads process.env.EPO_OPS_CONSUMER_KEY & EPO_OPS_SECRET (.env.local)  |
+| - Reads process.env.EPO_OPS_CONSUMER_KEY & EPO_OPS_SECRET               |
 | - Returns graceful JSON fallback if keys are absent (no server crash)   |
 +-----------------+------------------------------------+------------------+
                   |                                    |
@@ -84,37 +93,48 @@ This repository is engineered so the source code can be published publicly on Gi
 
 ```text
 vanguard-ip-audit/
-├── .env.local               <-- Your REAL secret EPO keys (strictly git-ignored, never uploaded to GitHub)
-├── .env.example             <-- Blank placeholder keys (safe to commit to GitHub)
-├── .gitignore               <-- Blocks .env.local, .env*, and secret files from Git
-├── README.md                <-- Recruiter & partner documentation
-├── package.json             <-- Next.js 15, React 19, TypeScript, Tailwind CSS, Lucide Icons
+├── .env.example                       # Placeholder env vars (safe to commit)
+├── .gitignore                         # Blocks .env.local and secret files
+├── README.md                          # Project & architecture documentation
+├── package.json                       # Next.js 15, React 19, TypeScript, Tailwind CSS v3, Lucide
 ├── app/
-│   ├── page.tsx             <-- Main M&A Virtual Data Room webpage & deliverable exporter
-│   └── api/
-│       └── audit/
-│           └── route.ts     <-- Server-only route talking to EPO OPS with IP rate limiting
+│   ├── layout.tsx                     # Root layout, Navbar, Demo HUDs, & Footer
+│   ├── page.tsx                       # Landing page: Recruiter Demo banner + Live EPO Audit form
+│   ├── overview/page.tsx              # Executive KPI dashboard & 4 Critical Red Flags grid
+│   ├── portfolio/page.tsx             # Full Schedule 3.14 searchable/filterable table & CSV export
+│   ├── patent/[id]/page.tsx           # Individual patent dossier, 5-pillar scorecard & SPA clause copy
+│   ├── memo/page.tsx                  # Print/PDF Executive Due Diligence Memorandum (Section 3.14)
+│   ├── history/page.tsx               # Audit History & Deal Vault (localStorage persistence)
+│   ├── guide/page.tsx                 # Non-technical "How It Works" legal framework guide
+│   └── api/audit/route.ts             # Server-only EPO OPS v3.2 proxy with rate limiting
+├── components/
+│   ├── Navbar.tsx                     # Top navigation bar, Watch Recruiter Demo & New Audit actions
+│   ├── DealContext.tsx                # 5-pillar statutory evaluator, state, CSV export & Deal Vault
+│   ├── RecruiterDemoContext.tsx       # 5-step walkthrough state (paused by default, Back/Next, Esc)
+│   ├── DemoPlayerBar.tsx              # Floating glassmorphism HUD controller (Play/Pause/Back/Next)
+│   ├── DemoNarratorBox.tsx            # Floating step-by-step Tour Commentary box
+│   ├── DemoSpotlight.tsx              # High-contrast spotlight rings & bouncing callout badges
+│   ├── AuditScannerModal.tsx          # Animated 8s statutory scanner (Demo & Live EPO API)
+│   └── DemoCompletionModal.tsx        # Final executive summary card & Digital CV link
 └── lib/
-    ├── sampleDeal.ts        <-- 12 European patents for fictional target "Aetheris MedTech GmbH"
-    ├── epoAuth.ts           <-- Handles 20-minute OAuth2 token caching & refresh
-    ├── epoClient.ts         <-- Normalizes messy numbers via Number Service & parses EPO XML
-    └── riskAnalyzer.ts      <-- 5-Check Legal Due Diligence Rules Engine & Lawyer's Note generator
+    ├── sampleDeal.ts                  # 12 European patents for "Aetheris MedTech GmbH"
+    ├── epoAuth.ts                     # OAuth2 client-credentials token caching & refresh
+    ├── epoClient.ts                   # EPO Number Service & XML response parser
+    └── riskAnalyzer.ts                # Core EPC statutory risk analysis utilities
 ```
 
 ---
 
-## 5. Step-by-Step Instructions: Running Locally or Testing Immediately
+## 5. Running Locally
 
-### Option A: Test Immediately in "Sample M&A Deal Mode" (No API Keys Required)
-Recruiters and reviewers can evaluate the full platform immediately without registering for EPO credentials:
+### Option A: Explore Immediately via the Recruiter Demo (No API Keys Required)
 1. Install dependencies and start the development server:
    ```bash
    npm install
    npm run dev
    ```
 2. Open `http://localhost:3000` in your browser.
-3. Ensure the top navigation toggle is set to **[Sample M&A Deal Mode]** and click **"Load Sample M&A Target (12 Patents — Aetheris MedTech GmbH)"**.
-4. Click any patent row to inspect the **5-Check Statutory Scorecard**, test live Chain-of-Title re-evaluation by changing the **Target Company Legal Name**, or click **"Export IP Due Diligence Schedule"** to generate the print-ready Executive Memo or SPA CSV Schedule.
+3. Click **Watch Recruiter Demo** (in the top bar or compact hero banner) to step through all 5 stages of the **Project Aetheris — MedTech Deal** using **Back / Next** (or press **Play** to auto-advance).
 
 ### Option B: Connect Live EPO Open Patent Services (OPS) v3.2 Credentials
 1. Register for a free developer account at **[https://developers.epo.org/](https://developers.epo.org/)** and create an app to obtain your **Consumer Key** and **Consumer Secret**.
@@ -122,16 +142,15 @@ Recruiters and reviewers can evaluate the full platform immediately without regi
    ```bash
    cp .env.example .env.local
    ```
-3. Paste your credentials into `.env.local` (which is automatically ignored by `.gitignore`):
+3. Add your credentials to `.env.local` (or Vercel Environment Variables for production):
    ```env
    EPO_OPS_CONSUMER_KEY=your_real_epo_consumer_key_here
    EPO_OPS_SECRET=your_real_epo_consumer_secret_here
    ```
-4. Switch the top bar toggle to **[Live EPO API Mode]** and click **"Verify Assets Against EPO Register"**.
+4. Enter any Target Company Legal Entity and European Patent numbers on the landing page and click **Run Live EPO 5-Pillar Audit**.
 
 ---
 
 ## 6. Legal Disclaimer
 
-*Vanguard IP Audit is a legal technology decision-support and engineering portfolio system designed to assist qualified legal professionals during preliminary M&A and venture capital due diligence. Automated outputs from this tool do not constitute formal legal advice, a formal freedom-to-operate (FTO) or validity opinion, or a substitute for certified extracts from the European Patent Register.*
-].join('\n');
+*Vanguard IP Audit is a legal technology decision-support and engineering portfolio project designed to assist qualified legal professionals during preliminary M&A and venture capital due diligence. Automated outputs from this tool do not constitute formal legal advice, a freedom-to-operate (FTO) or validity opinion, or a substitute for certified extracts from the European Patent Register.*

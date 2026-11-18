@@ -269,7 +269,7 @@ export default function MemoPage() {
         {/* Section 3: Recommended Reps & Warranties */}
         <div className="space-y-3 font-sans">
           <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider border-b border-slate-200 pb-1">
-            3. Recommended SPA Warranties (Section 4.14)
+            3. Recommended SPA Warranties (Section 3.14)
           </h2>
           <div className="text-xs text-slate-700 leading-relaxed font-serif space-y-2">
             <p>

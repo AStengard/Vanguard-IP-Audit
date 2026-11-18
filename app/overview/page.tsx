@@ -154,8 +154,15 @@ export default function OverviewPage() {
 
           <Link
             href="/"
+            onClick={() => {
+              try {
+                sessionStorage.setItem('vanguard_focus_new_audit', '1');
+              } catch {
+                // Ignore storage restrictions
+              }
+            }}
             className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
-            title="Start a new audit or switch deal"
+            title="Start a new audit"
           >
             <Plus className="w-4 h-4" />
             <span>New Audit</span>

@@ -67,7 +67,7 @@ const STEP_NARRATIONS: Record<number, StepNarration> = {
     tagColor: "bg-teal-500/20 text-teal-300 border-teal-500/30",
     icon: Sparkles,
     title: "Law Firm Memo & SPA Covenants",
-    body: "Reviewing the formal partner-level Legal Due Diligence Memorandum, complete with tailored SPA warranty clauses (Section 4.14), specific indemnity protections, and closing escrow retentions.",
+    body: "Reviewing the formal partner-level Legal Due Diligence Memorandum, complete with tailored SPA warranty clauses (Section 3.14), specific indemnity protections, and closing escrow retentions.",
     dealImpact: "Bridges the gap between patent data and corporate law: translates complex patent register defects directly into binding transactional contract clauses.",
   },
 };

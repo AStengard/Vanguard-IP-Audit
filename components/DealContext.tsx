@@ -88,7 +88,7 @@ export function evaluatePatentAsset(patent: SamplePatentRecord, targetCompany: s
   let check1Status: 'CLEAN' | 'WARNING' | 'CRITICAL' = 'CLEAN';
   let check1Headline = 'Verified Target Ownership';
   let check1LawyerNote = `Recorded proprietor "${recordedOwner}" matches target entity "${targetCompany}" (${similarity}% match).`;
-  let check1Impact = 'Standard IP title warranty in SPA Section 4.14(a) is sufficient.';
+  let check1Impact = 'Standard IP title warranty in SPA Section 3.14(a) is sufficient.';
 
   if (similarity < 70) {
     check1Status = 'CRITICAL';

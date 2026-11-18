@@ -71,20 +71,20 @@ export default function GuidePage() {
 
         <div className="text-xs text-slate-700 leading-relaxed space-y-3 font-serif">
           <p>
-            In European technology and life sciences acquisitions, patents often represent <strong>70% to 90% of the target company&apos;s enterprise value</strong>. Yet buyers and corporate M&amp;A teams frequently rely on seller-prepared disclosure schedules (SPA Schedule 3.14) without verifying the official European Patent Register.
+            In European life sciences and deep-tech acquisitions, patents often represent up to <strong>70%&ndash;90% of a target company&apos;s enterprise value</strong>. Yet deal teams still rely on manual, error-prone cross-checks between seller-prepared disclosure schedules (SPA Schedule 3.14), the European Patent Register, and fragmented national patent offices.
           </p>
           <p>
-            Manual verification across the European Patent Office (EPO) and individual national patent offices takes <strong>20 to 30 billable hours per transaction</strong>. Junior attorneys often miss subtle statutory defects:
+            Manual verification across dozens of patent families routinely consumes <strong>substantial billable hours per transaction</strong>&mdash;and still risks missing high-stakes statutory defects:
           </p>
           <ul className="list-disc pl-5 space-y-1.5 font-sans text-xs text-slate-800">
             <li>
-              <strong>Unrecorded Assignments:</strong> Patents registered to a founder or university lab, meaning the buyer acquires an empty shell company.
+              <strong>Unrecorded Assignments (Art. 72 EPC):</strong> Patents still registered to a founder or university tech-transfer office, leaving core IP stranded outside the target entity.
             </li>
             <li>
-              <strong>Lapsed Patents in Grace Periods:</strong> Missed annuity payments sitting in an EPO 6-month surcharge window (Rule 51(2) EPC) that will permanently lapse if not paid immediately.
+              <strong>Patents in Grace Periods (Rule 51(2) EPC):</strong> Missed renewal fees sitting inside the EPO&apos;s 6-month surcharge window that will permanently lapse if not cured before closing.
             </li>
             <li>
-              <strong>Competitor Oppositions:</strong> Active Article 99 EPC revocations filed by tier-1 competitors that could wipe out patent protection across 39 countries.
+              <strong>Central Oppositions (Art. 99 EPC):</strong> Active competitor oppositions threatening to revoke protection across up to 39 EPC contracting states in a single proceeding.
             </li>
           </ul>
         </div>
@@ -252,7 +252,7 @@ export default function GuidePage() {
             href="/"
             className="inline-flex items-center gap-2 text-xs font-bold text-slate-300 hover:text-white transition"
           >
-            <span>Try Custom Audit / Preset Scenarios</span>
+            <span>Run Live EPO Audit / Watch Demo</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

@@ -210,7 +210,7 @@ export default function NewAuditPage() {
           legalSummary: `Live EPO OPS registry retrieval for ${id}. Recorded proprietor: ${owner}.`,
           spaRemediationClause: !isMatch
             ? `CLOSING CONDITION PRECEDENT: Require executed Art. 72 EPC Confirmatory Deed of Assignment transferring ${id} from ${owner} to ${cleanLiveTarget} prior to Closing.`
-            : `STANDARD WARRANTY SUFFICIENT: Include ${id} under Schedule 3.14(a) subject to Section 4.14 IP ownership representations.`,
+            : `STANDARD WARRANTY SUFFICIENT: Include ${id} under Schedule 3.14(a) subject to Section 3.14 IP ownership representations.`,
           cpcClass: rec.cpcClasses?.[0] || 'A61B',
           inpadocEvents: (rec.legalEvents || []).map((ev: any) => ({
             date: ev.date || '2024-01-01',
