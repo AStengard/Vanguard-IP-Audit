@@ -29,7 +29,7 @@ import { useRecruiterDemo } from '@/components/RecruiterDemoContext';
 import DemoSpotlight from '@/components/DemoSpotlight';
 
 export default function OverviewPage() {
-  const { targetCompany, evaluatedPortfolio, metrics, downloadCsv, resetToShowcase } = useDeal();
+  const { targetCompany, evaluatedPortfolio, metrics, downloadCsv, resetToShowcase, clearDeal } = useDeal();
   const { isDemoActive, currentStepIndex, playbackSpeed } = useRecruiterDemo();
 
   // Find the critical red flags to feature on the executive action center
@@ -147,6 +147,7 @@ export default function OverviewPage() {
           <Link
             href="/"
             onClick={() => {
+              clearDeal();
               try {
                 sessionStorage.setItem('vanguard_focus_new_audit', '1');
               } catch {
@@ -370,121 +371,14 @@ export default function OverviewPage() {
       </div>
 
       {/* =====================================================================
-          4. SCHEDULE PREVIEW (TOP 5 ASSETS)
+          4. QUICK NAVIGATION CARD (HOW IT WORKS)
       ====================================================================== */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden space-y-0">
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">
-              Schedule 3.14 (Registered Intellectual Property) — Preview
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Showing disclosed patent assets for {targetCompany}.
-            </p>
-          </div>
-          <Link
-            href="/portfolio"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition"
-          >
-            <span>Open Full Schedule</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 uppercase tracking-wider text-[11px] font-bold">
-                <th className="py-3 px-4">Patent Ref</th>
-                <th className="py-3 px-4">Invention Title</th>
-                <th className="py-3 px-4">Registered Proprietor</th>
-                <th className="py-3 px-4">Due Diligence Standing</th>
-                <th className="py-3 px-4">Recommended Contract Remedy</th>
-                <th className="py-3 px-4 text-right">Dossier</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {evaluatedPortfolio.slice(0, 5).map((asset) => {
-                const isCritical = asset.overallRisk === 'CRITICAL';
-                const isWarning = asset.overallRisk === 'WARNING';
-                return (
-                  <tr key={asset.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
-                      {asset.id}
-                      {asset.unitaryPatent && (
-                        <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 font-sans">
-                          UP
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 max-w-xs truncate font-medium text-slate-800">
-                      {asset.title}
-                    </td>
-                    <td className="py-3 px-4 max-w-xs truncate text-slate-700">
-                      {asset.registeredProprietor}
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${isCritical
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                          : isWarning
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                          }`}
-                      >
-                        {asset.primaryIssue}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-slate-600 font-semibold">
-                      {asset.recommendedAction}
-                    </td>
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <Link
-                        href={`/patent/${asset.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-700 font-bold text-xs transition"
-                      >
-                        <span>Dossier</span>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* =====================================================================
-          5. QUICK NAVIGATION CARDS (HOW IT WORKS & MEMO)
-      ====================================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Link
-          href="/memo"
-          className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-xs flex items-center justify-between group transition cursor-pointer"
-        >
-          <div className="space-y-1 max-w-md">
-            <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
-              <FileText className="w-4 h-4" />
-              <span>Investment Committee Deliverable</span>
-            </div>
-            <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition">
-              Executive Due Diligence Memorandum (PDF)
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Print-formatted law firm memorandum summarizing findings, red flag schedules, and closing conditions.
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 group-hover:bg-slate-900 group-hover:text-white flex items-center justify-center transition shrink-0 ml-4">
-            <ArrowRight className="w-5 h-5" />
-          </div>
-        </Link>
-
+      <div className="grid grid-cols-1 gap-4">
         <Link
           href="/guide"
           className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-6 shadow-xs flex items-center justify-between group transition cursor-pointer"
         >
-          <div className="space-y-1 max-w-md">
+          <div className="space-y-1 max-w-2xl">
             <div className="flex items-center gap-2 text-slate-700 font-bold text-xs">
               <HelpCircle className="w-4 h-4" />
               <span>Non-Technical Walkthrough</span>

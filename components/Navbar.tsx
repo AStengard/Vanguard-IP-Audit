@@ -18,13 +18,15 @@ import { useRecruiterDemo } from './RecruiterDemoContext';
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { savedAudits } = useDeal();
+  const { savedAudits, clearDeal } = useDeal();
   const { startDemo, exitDemo, isDemoActive } = useRecruiterDemo();
 
   const handleNewAudit = () => {
     if (isDemoActive) {
       exitDemo();
     }
+    // Clear the currently active audit from Overview/Portfolio/Memo while keeping it saved in Audit History
+    clearDeal();
 
     if (pathname === '/') {
       window.dispatchEvent(new CustomEvent('vanguard:new-audit'));

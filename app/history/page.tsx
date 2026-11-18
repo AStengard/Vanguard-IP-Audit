@@ -35,6 +35,7 @@ export default function HistoryPage() {
     deleteSavedAudit,
     clearAllSavedAudits,
     resetToShowcase,
+    clearDeal,
     downloadCsv
   } = useDeal();
 
@@ -139,6 +140,7 @@ export default function HistoryPage() {
           <Link
             href="/"
             onClick={() => {
+              clearDeal();
               try {
                 sessionStorage.setItem('vanguard_focus_new_audit', '1');
               } catch {
